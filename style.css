@@ -17,6 +17,19 @@ body {
     max-width: 900px;
 }
 
+/* Estilo para o contêiner da logo - centraliza horizontalmente */
+.logo-container {
+    text-align: center; /* Centraliza o conteúdo (a imagem) horizontalmente */
+    margin-bottom: 20px; /* Espaçamento abaixo da logo */
+}
+
+.shopee-logo {
+    max-width: 120px; /* Reduz o tamanho máximo da logo para 120px */
+    height: auto; /* Mantém a proporção da imagem */
+    display: block; /* Garante que a imagem se comporte como um bloco para centralização */
+    margin: 0 auto; /* Centraliza a imagem dentro do seu contêiner */
+}
+
 h1, h2 {
     color: #0056b3;
     text-align: center;
