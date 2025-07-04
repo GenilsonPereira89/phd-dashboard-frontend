@@ -4,10 +4,8 @@ const PACOTES_POR_OPERADOR_DIA_META = 450;
 const DIAS_OPERACAO_SEMANA = 6; // Esta constante serve mais para informação agora, a lógica de dias úteis reflete a escala
 
 // URL base do seu backend - MUITO IMPORTANTE!
-// QUANDO FOR PARA O RENDER, ESTA URL MUDARÁ PARA O ENDEREÇO DO SEU BACKEND NO RENDER.
-//const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api'; // <-- ALTERAÇÃO AQUI!
-
-const API_BASE_URL = 'http://localhost:5000/api'; // Aponta para o backend local
+// Quando for para o Render, esta URL mudará para o endereço do seu backend no Render.
+const API_BASE_URL = 'http://localhost:5000/api'; 
 
 // Elementos HTML (seletores)
 const dataInput = document.getElementById('data');
