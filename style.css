@@ -19,15 +19,15 @@ body {
 
 /* Estilo para o contêiner da logo - centraliza horizontalmente */
 .logo-container {
-    text-align: center; /* Centraliza o conteúdo (a imagem) horizontalmente */
-    margin-bottom: 20px; /* Espaçamento abaixo da logo */
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .shopee-logo {
-    max-width: 120px; /* Reduz o tamanho máximo da logo para 120px */
-    height: auto; /* Mantém a proporção da imagem */
-    display: block; /* Garante que a imagem se comporte como um bloco para centralização */
-    margin: 0 auto; /* Centraliza a imagem dentro do seu contêiner */
+    max-width: 120px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
 
 h1, h2 {
@@ -49,20 +49,20 @@ h1, h2 {
 .input-group {
     margin-bottom: 15px;
     display: flex;
-    flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha em telas pequenas */
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px; /* Espaço entre os elementos */
+    gap: 10px;
 }
 
 .input-group label {
-    flex: 1 1 120px; /* Cresce e encolhe, base de 120px */
+    flex: 1 1 120px;
     font-weight: bold;
     color: #555;
 }
 
 .input-group input[type="date"],
 .input-group input[type="number"] {
-    flex: 2 1 180px; /* Cresce mais que o label */
+    flex: 2 1 180px;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -70,7 +70,7 @@ h1, h2 {
 }
 
 .input-group button {
-    flex: 1 1 auto; /* Ajusta-se ao espaço disponível */
+    flex: 1 1 auto; /* ISSO COLOCA OS BOTÕES AO LADO (como o de Atualizar Padrão) */
     padding: 10px 15px;
     background-color: #007bff;
     color: white;
@@ -90,23 +90,23 @@ h1, h2 {
     color: #777;
     border-left: 3px solid #007bff;
     padding-left: 10px;
-    margin-top: -5px; /* Ajusta para ficar mais próximo do input */
+    margin-top: -5px;
 }
 
 /* Checkbox group adjustments */
 .input-group.checkbox-group {
-    justify-content: flex-start; /* Alinha o conteúdo à esquerda */
-    align-items: center; /* Centraliza verticalmente o checkbox e o label */
+    justify-content: flex-start;
+    align-items: center;
     margin-top: 10px;
 }
 
 .input-group.checkbox-group label {
-    flex: none; /* Não permite que o label ocupe todo o espaço */
-    margin-left: 5px; /* Espaço entre o checkbox e o label */
-    font-weight: normal; /* Labels de checkbox geralmente não são em negrito */
+    flex: none;
+    margin-left: 5px;
+    font-weight: normal;
 }
 
-/* Summary Section */
+/* Summary Section (KPI Cards) */
 .summary-section h2 {
     color: #007bff;
     text-align: center;
@@ -142,7 +142,7 @@ h1, h2 {
 }
 
 .kpi-card p span {
-    color: #28a745; /* Cor padrão para KPIS positivos */
+    color: #28a745;
 }
 
 #saldoAcumulado.positivo {
@@ -224,7 +224,7 @@ h1, h2 {
 
 .excecao-dia {
     font-weight: bold;
-    color: #6c757d; /* Cinza para dias de exceção */
+    color: #6c757d;
 }
 
 /* Seletor de Mês e Ano */
@@ -257,32 +257,32 @@ h1, h2 {
     background-color: #138496;
 }
 
-/* --- Modal Styles --- */
+/* --- Modal Styles (mantido com display: none; para não abrir automaticamente) --- */
 .modal {
-    display: none; /* CORREÇÃO AQUI: Garante que o modal esteja escondido por padrão */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
+    display: none; /* ESSA É A LINHA CRÍTICA: Garante que o modal esteja escondido por padrão */
+    position: fixed;
+    z-index: 1000;
     left: 0;
     top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    display: flex; /* Use flexbox para centralizar, mas é iniciado como 'none' */
-    align-items: center; /* Center vertically */
-    justify-content: center; /* Center horizontally */
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    display: flex; /* Isso ainda é importante para centralizar QUANDO ele estiver visível */
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: auto; /* Removed fixed margin, flexbox handles centering */
+    margin: auto;
     padding: 25px;
     border: 1px solid #888;
     border-radius: 8px;
-    width: 90%; /* Responsive width */
-    max-width: 500px; /* Max width for larger screens */
+    width: 90%;
+    max-width: 500px;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-    position: relative; /* Needed for close button positioning */
+    position: relative;
 }
 
 .modal-content h2 {
@@ -303,7 +303,7 @@ h1, h2 {
 }
 
 .modal-content input[type="number"] {
-    width: calc(100% - 22px); /* Adjust for padding/border */
+    width: calc(100% - 22px);
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -311,10 +311,10 @@ h1, h2 {
 }
 
 .modal-content button {
-    display: block; /* Make buttons stack */
+    display: block;
     width: 100%;
     padding: 10px;
-    margin-top: 15px; /* Space between buttons */
+    margin-top: 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -332,7 +332,7 @@ h1, h2 {
 }
 
 #cancelEditBtn {
-    background-color: #6c757d; /* Grey for cancel */
+    background-color: #6c757d;
     color: white;
 }
 
@@ -345,7 +345,7 @@ h1, h2 {
     float: right;
     font-size: 28px;
     font-weight: bold;
-    position: absolute; /* Position relative to modal-content */
+    position: absolute;
     top: 10px;
     right: 15px;
 }
@@ -357,21 +357,21 @@ h1, h2 {
     cursor: pointer;
 }
 
-/* ESTILO DO BOTÃO DE "ADICIONAR LANÇAMENTO" NO FORMULÁRIO PRINCIPAL - REVERTIDO PARA AZUL */
+/* ESTILO DO BOTÃO DE "ADICIONAR LANÇAMENTO" NO FORMULÁRIO PRINCIPAL - CONTINUA ABAIXO */
 .form-section button {
-    background-color: #007bff; /* Azul padrão */
+    background-color: #007bff;
     color: white;
     padding: 12px 20px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    width: 100%;
+    width: 100%; /* Esta propriedade faz com que ele ocupe a largura total e fique abaixo */
     transition: background-color 0.3s ease;
 }
 
 .form-section button:hover {
-    background-color: #0056b3; /* Azul mais escuro no hover */
+    background-color: #0056b3;
 }
 
 @media (max-width: 768px) {
