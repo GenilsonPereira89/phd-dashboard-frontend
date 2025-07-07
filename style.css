@@ -268,29 +268,11 @@ table tbody tr:hover {
     cursor: pointer;
     font-size: 0.9em;
     transition: background-color 0.3s ease;
-    margin-left: 5px; /* Espaço entre os botões */
 }
 
 .delete-btn:hover {
     background-color: #c82333;
 }
-
-/* Estilo para o novo botão de edição na tabela */
-.edit-btn {
-    background-color: #007bff; /* Azul */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease;
-}
-
-.edit-btn:hover {
-    background-color: #0056b3;
-}
-
 
 /* Estilo para o texto de "Dia de Exceção" na tabela */
 .excecao-dia {
