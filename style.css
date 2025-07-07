@@ -259,7 +259,7 @@ h1, h2 {
 
 /* --- Modal Styles --- */
 .modal {
-    display: none; /* Hidden by default - CORREÇÃO AQUI */
+    display: none; /* CORREÇÃO AQUI: Garante que o modal esteja escondido por padrão */
     position: fixed; /* Stay in place */
     z-index: 1000; /* Sit on top */
     left: 0;
@@ -268,7 +268,7 @@ h1, h2 {
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    display: flex; /* Use flexbox to center content */
+    display: flex; /* Use flexbox para centralizar, mas é iniciado como 'none' */
     align-items: center; /* Center vertically */
     justify-content: center; /* Center horizontally */
 }
@@ -357,9 +357,9 @@ h1, h2 {
     cursor: pointer;
 }
 
-/* Make sure the main form's button styling for Add/Update remains */
-.form-section button { /* Ajsutado para form-section */
-    background-color: #28a745; /* Changing to green as it will now only ADD */
+/* ESTILO DO BOTÃO DE "ADICIONAR LANÇAMENTO" NO FORMULÁRIO PRINCIPAL - REVERTIDO PARA AZUL */
+.form-section button {
+    background-color: #007bff; /* Azul padrão */
     color: white;
     padding: 12px 20px;
     border: none;
@@ -371,7 +371,7 @@ h1, h2 {
 }
 
 .form-section button:hover {
-    background-color: #218838;
+    background-color: #0056b3; /* Azul mais escuro no hover */
 }
 
 @media (max-width: 768px) {
