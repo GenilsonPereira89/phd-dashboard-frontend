@@ -5,7 +5,7 @@ const DIAS_OPERACAO_SEMANA = 6; // Esta constante serve mais para informação a
 
 // URL base do seu backend - MUITO IMPORTANTE!
 // QUANDO FOR PARA O RENDER, ESTA URL MUDARÁ PARA O ENDEREÇO DO SEU BACKEND NO RENDER.
-const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api'; // <-- ALTERAÇÃO AQUI!
+const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api';
 
 // Elementos HTML (seletores)
 const dataInput = document.getElementById('data');
@@ -25,11 +25,12 @@ const diasOperacaoConsideradosElement = document.getElementById('diasOperacaoCon
 const diasRestantesElement = document.getElementById('diasRestantes');
 const projecaoTextoElement = document.getElementById('projecaoTexto');
 const faltaParaMetaMensalElement = document.getElementById('faltaParaMetaMensal');
+const totalDiasOperacionaisPrevistosElement = document.getElementById('totalDiasOperacionaisPrevistos'); // NOVO ELEMENTO AQUI!
 
 const numOperadoresGlobalInput = document.getElementById('numOperadores'); // Renomeado para clareza
 const updateConfigBtn = document.getElementById('updateConfigBtn');
 
-// Novos seletores para a seleção de mês/ano
+// Novos seletores para a seleção de mês/ano do dashboard principal
 const selectMes = document.getElementById('selectMes');
 const selectAno = document.getElementById('selectAno');
 const viewMonthBtn = document.getElementById('viewMonthBtn');
@@ -38,9 +39,25 @@ const viewMonthBtn = document.getElementById('viewMonthBtn');
 // NOVO FORMATO: { data: 'YYYY-MM-DD', producao: 12345, isExcecao: true/false, operadoresNoDia: 13 }
 let producoesMes = []; // Esta variável agora conterá os dados filtrados do mês/ano visualizado
 
-// Variáveis para controlar o mês/ano que está sendo visualizado
+// Variáveis para controlar o mês/ano que está sendo visualizado no dashboard
 let anoVisualizado;
 let mesVisualizado; // 1-12
+
+// --- NOVOS ELEMENTOS PARA O RELATÓRIO ANALÍTICO ---
+const dashboardSection = document.getElementById('dashboardSection');
+const reportSection = document.getElementById('reportSection');
+const showDashboardBtn = document.getElementById('showDashboardBtn');
+const showReportBtn = document.getElementById('showReportBtn');
+
+const reportMesesSelect = document.getElementById('reportMeses');
+const reportAnoSelect = document.getElementById('reportAno');
+const generateReportBtn = document.getElementById('generateReportBtn');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
+const reportTable = document.getElementById('reportTable');
+const reportTableHeader = document.getElementById('reportTableHeader');
+const reportTableBody = document.getElementById('reportTableBody');
+const reportStatusElement = document.getElementById('reportStatus');
+
 
 // --- Funções para Interagir com a API ---
 
@@ -160,33 +177,128 @@ function getNomeMes(mesNumero) {
     return data.toLocaleDateString('pt-BR', { month: 'long' });
 }
 
-// Função para calcular dias de operação no mês, *ignorando os feriados já lançados*
-// Agora leva em conta os operadoresNoDia de cada registro para calcular a meta do mês
-function getDiasDeOperacaoNoMes(ano, mes, producoesDoMes) {
-    let count = 0;
-    const date = new Date(ano, mes - 1, 1);
-    while (date.getMonth() === mes - 1) {
-        const dayOfWeek = date.getDay();
-        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
-
-        // Um dia é considerado operacional se:
-        // 1. Não for domingo E não for uma exceção lançada
-        // OU
-        // 2. For domingo E tiver um registro de produção E NÃO for uma exceção (ou seja, foi trabalhado)
-        if ((dayOfWeek !== 0 && !(registroParaEsteDia && registroParaEsteDia.isExcecao)) ||
-            (dayOfWeek === 0 && registroParaEsteDia && !registroParaEsteDia.isExcecao)) {
-            count++;
-        }
-        date.setDate(date.getDate() + 1);
-    }
-    return count;
-}
-
 // Função para obter a META DIÁRIA para um dia específico, considerando os operadores daquele dia
 function getMetaDiariaParaDia(operadores) {
     return operadores * PACOTES_POR_OPERADOR_DIA_META;
 }
+
+// --- Nova Função: Calcular KPIs para um Período ---
+// Esta função encapsula a lógica de cálculo de KPIs, tornando-a reutilizável
+function calculateKPIsForMonth(producoesDoMes, ano, mes, numOperadoresPadrao, pacotesPorOperadorDiaMeta) {
+    let producaoAcumulada = 0;
+    let diasDeOperacaoConsiderados = 0; // Dias com registros de produção que NÃO são exceção
+    let totalOperadoresEmDiasOperacionais = 0; // Para o PHD médio, com base em operadores reais dos registros
+
+    // Garante que as produções estão ordenadas por data
+    producoesDoMes.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+    const hoje = new Date(); // Data atual para cálculos (horas, minutos, etc. zerados para comparação de data)
+    hoje.setHours(0, 0, 0, 0);
+
+    // --- CÁLCULO DA META MENSAL TOTAL POTENCIAL (para o mês inteiro) e Total de Dias Operacionais Previstos ---
+    let metaMensalTotal = 0;
+    let totalDiasOperacionaisPrevistos = 0; // NOVO KPI AQUI!
+    const totalDiasNoMes = new Date(ano, mes, 0).getDate(); // Último dia do mês (ex: 31 para julho)
+
+    for (let day = 1; day <= totalDiasNoMes; day++) {
+        const currentDate = new Date(ano, mes - 1, day);
+        const dayOfWeek = currentDate.getDay(); // 0 = Domingo, 1 = Segunda...
+        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
+        const isExcecaoDia = registroParaEsteDia ? registroParaEsteDia.isExcecao : false;
+
+        // Um dia contribui para a metaMensalTotal e para totalDiasOperacionaisPrevistos se:
+        // 1. For um dia de semana (seg-sab) E não for uma exceção explícita.
+        // 2. OU For um domingo E tiver um registro de produção E NÃO for uma exceção (foi trabalhado).
+        if ((dayOfWeek !== 0 && !isExcecaoDia) || (dayOfWeek === 0 && registroParaEsteDia && !isExcecaoDia)) {
+            // Para a meta geral do mês, usa operadores padrão, a menos que um domingo tenha sido especificamente trabalhado.
+            const operatorsForMeta = (dayOfWeek === 0 && registroParaEsteDia) ? registroParaEsteDia.operadoresNoDia : numOperadoresPadrao;
+            metaMensalTotal += operatorsForMeta * pacotesPorOperadorDiaMeta;
+            totalDiasOperacionaisPrevistos++; // Incrementa o contador de dias operacionais previstos
+        }
+    }
+
+    // --- CÁLCULO DA META ESPERADA ATÉ HOJE (metaAcumulada) ---
+    // Esta é a meta ideal acumulada para os dias que já passaram no mês (ou o mês inteiro se for um mês histórico)
+    let metaAcumulada = 0;
+    const isCurrentMonth = (ano === hoje.getFullYear() && mes === hoje.getMonth() + 1);
+
+    for (let day = 1; day <= totalDiasNoMes; day++) {
+        const currentDate = new Date(ano, mes - 1, day);
+        currentDate.setHours(0, 0, 0, 0); // Zera hora para comparação de data
+
+        // Se for o mês atual, só acumula a meta para dias até "hoje" (inclusive)
+        // Para meses passados, acumula para o mês inteiro.
+        if (isCurrentMonth && currentDate > hoje) {
+            continue; // Pula dias futuros se for o mês atual
+        }
+
+        const dayOfWeek = currentDate.getDay();
+        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
+        const isExcecaoDia = registroParaEsteDia ? registroParaEsteDia.isExcecao : false;
+
+        // Aplica a mesma lógica de dias úteis/trabalhados que para metaMensalTotal
+        if ((dayOfWeek !== 0 && !isExcecaoDia) || (dayOfWeek === 0 && registroParaEsteDia && !isExcecaoDia)) {
+            const operatorsForMeta = (dayOfWeek === 0 && registroParaEsteDia) ? registroParaEsteDia.operadoresNoDia : numOperadoresPadrao;
+            metaAcumulada += operatorsForMeta * pacotesPorOperadorDiaMeta;
+        }
+    }
+
+    // --- CÁLCULO DA PRODUÇÃO ACUMULADA REAL E OUTROS KPI's baseados em registros reais ---
+    for (const registro of producoesDoMes) {
+        if (!registro.isExcecao) { // Só considera dias que não são exceção
+            producaoAcumulada += registro.producao;
+            diasDeOperacaoConsiderados++;
+            totalOperadoresEmDiasOperacionais += registro.operadoresNoDia;
+        }
+    }
+
+    const saldoTotalAcumulado = producaoAcumulada - metaAcumulada;
+    const phdMedioMensal = totalOperadoresEmDiasOperacionais > 0
+        ? producaoAcumulada / totalOperadoresEmDiasOperacionais
+        : 0;
+
+    const faltaParaMetaMensal = Math.max(0, metaMensalTotal - producaoAcumulada);
+
+    // --- CÁLCULO DE DIAS RESTANTES NO MÊS PARA PROJEÇÃO (apenas dias futuros) ---
+    let diasRestantes = 0;
+    for (let day = 1; day <= totalDiasNoMes; day++) {
+        const currentDate = new Date(ano, mes - 1, day);
+        currentDate.setHours(0, 0, 0, 0); // Zera hora para comparação
+
+        // Só conta dias estritamente NO FUTURO a partir de "hoje"
+        if (currentDate <= hoje) {
+            continue;
+        }
+
+        const dayOfWeek = currentDate.getDay();
+        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
+        const isExcecaoDia = registroParaEsteDia ? registroParaEsteDia.isExcecao : false;
+
+        // Um dia futuro é considerado "restante" se for um dia de semana (seg-sab) e não for uma exceção explícita.
+        // Domigos futuros não são contados a menos que já exista um registro indicando que será trabalhado (cenário raro para futuro)
+        if (dayOfWeek !== 0 && !isExcecaoDia) {
+            diasRestantes++;
+        } else if (dayOfWeek === 0 && registroParaEsteDia && !isExcecaoDia) { // Caso raro de domingo futuro já registrado como trabalhado
+            diasRestantes++;
+        }
+    }
+
+    return {
+        metaMensalTotal: Math.round(metaMensalTotal),
+        producaoAcumulada: producaoAcumulada,
+        metaAcumulada: Math.round(metaAcumulada),
+        saldoAcumulado: saldoTotalAcumulado,
+        phdMedioMensal: parseFloat(phdMedioMensal.toFixed(2)),
+        diasOperacaoConsiderados: diasDeOperacaoConsiderados,
+        diasRestantes: diasRestantes,
+        faltaParaMetaMensal: Math.round(faltaParaMetaMensal),
+        totalDiasOperacionaisPrevistos: totalDiasOperacionaisPrevistos // RETORNA O NOVO KPI!
+    };
+}
+
 
 // Event listener para a checkbox "Dia de Exceção"
 isExcecaoCheckbox.addEventListener('change', () => {
@@ -251,7 +363,7 @@ addProducaoBtn.addEventListener('click', async () => { // Marcado como async
         producaoDiariaInput.value = '';
         isExcecaoCheckbox.checked = false;
         producaoDiariaInput.disabled = false;
-        operadoresNoDiaInput.disabled = false; // Reabilita o campo de operadores
+        operadoresNoDiaInput.disabled = false;
         operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO; // Volta para o padrão
     }
 });
@@ -291,6 +403,7 @@ function popularSeletoresDeMesAno() {
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
+    // Popula seletores do Dashboard principal
     selectMes.innerHTML = '';
     meses.forEach((nome, index) => {
         const option = document.createElement('option');
@@ -307,21 +420,36 @@ function popularSeletoresDeMesAno() {
         option.textContent = i;
         selectAno.appendChild(option);
     }
+
+    // Popula seletores do Relatório Analítico
+    reportMesesSelect.innerHTML = '';
+    meses.forEach((nome, index) => {
+        const option = document.createElement('option');
+        option.value = index + 1;
+        option.textContent = nome;
+        reportMesesSelect.appendChild(option);
+    });
+
+    reportAnoSelect.innerHTML = '';
+    for (let i = anoAtual - 5; i <= anoAtual + 1; i++) { // Mais anos para histórico no relatório
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        reportAnoSelect.appendChild(option);
+    }
 }
 
-// Event listener para o botão 'Visualizar Mês'
+// Event listener para o botão 'Visualizar Mês' do Dashboard principal
 viewMonthBtn.addEventListener('click', async () => { // Marcado como async
     anoVisualizado = parseInt(selectAno.value);
     mesVisualizado = parseInt(selectMes.value);
     await atualizarDashboard(anoVisualizado, mesVisualizado); // Aguarda a atualização
 });
 
-
 // Função principal para atualizar o dashboard e o histórico
 async function atualizarDashboard(ano, mes) { // Marcado como async
     const anoRef = ano || new Date().getFullYear();
     const mesRef = mes || new Date().getMonth() + 1;
-
     anoVisualizado = anoRef;
     mesVisualizado = mesRef;
 
@@ -332,197 +460,220 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
     // --- AQUI É ONDE OS DADOS SÃO CARREGADOS DA API ---
     producoesMes = await fetchProducoes(anoVisualizado, mesVisualizado);
     producoesMes.sort((a, b) => new Date(a.data) - new Date(b.data)); // Garante a ordenação
-
     historicoTableBody.innerHTML = '';
 
-    let producaoAcumulada = 0;
-    let diasDeOperacaoConsiderados = 0;
-    let metaAcumulada = 0;
-    let saldoTotalAcumulado = 0;
-    let totalOperadoresEmDiasOperacionais = 0; // Para o PHD médio
+    const kpis = calculateKPIsForMonth(producoesMes, anoVisualizado, mesVisualizado, NUM_OPERADORES_PADRAO, PACOTES_POR_OPERADOR_DIA_META);
 
-    const nomeMes = getNomeMes(mesVisualizado);
-    mesAtualElement.textContent = `${nomeMes} de ${anoVisualizado}`;
+    mesAtualElement.textContent = `${getNomeMes(mesVisualizado)} de ${anoVisualizado}`;
+    metaMensalTotalElement.textContent = kpis.metaMensalTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+    producaoAcumuladaElement.textContent = kpis.producaoAcumulada.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+    metaAcumuladaElement.textContent = kpis.metaAcumulada.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
 
-    // produzõesDoMesVisualizado agora é a própria producoesMes (já filtrada e carregada da API)
-    const producoesDoMesVisualizado = producoesMes; 
-
-    // --- CÁLCULO DA META MENSAL TOTAL ---
-    // A meta mensal total agora soma as metas diárias para CADA DIA do mês,
-    // considerando o número de operadores no dia, se já lançado.
-    // Se o dia ainda não foi lançado, usa o NUM_OPERADORES_PADRAO para dias de semana (Mon-Sat).
-    // Domingos futuros (sem lançamento) NÃO contribuem para a meta mensal.
-    let metaMensalTotal = 0;
-    const date = new Date(anoVisualizado, mesVisualizado - 1, 1);
-    while (date.getMonth() === mesVisualizado - 1) {
-        const dayOfWeek = date.getDay();
-        const dataString = `${anoVisualizado}-${String(mesVisualizado).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const registroParaEsteDia = producoesDoMesVisualizado.find(p => p.data === dataString);
-
-        if (registroParaEsteDia) {
-            // Se o dia tem um registro e NÃO é uma exceção, adiciona sua meta
-            if (!registroParaEsteDia.isExcecao) {
-                metaMensalTotal += getMetaDiariaParaDia(registroParaEsteDia.operadoresNoDia);
-            }
-        } else {
-            // Se o dia não tem registro (é um dia futuro)
-            // Apenas adiciona meta para dias de semana (Mon-Sat) com base no padrão de operadores
-            if (dayOfWeek !== 0) { // Se não for domingo
-                metaMensalTotal += getMetaDiariaParaDia(NUM_OPERADORES_PADRAO);
-            }
-        }
-        date.setDate(date.getDate() + 1);
-    }
-    metaMensalTotalElement.textContent = metaMensalTotal.toLocaleString('pt-BR');
-
-
-    // --- PREENCHIMENTO DA TABELA E CÁLCULOS ACUMULADOS ---
-    producoesDoMesVisualizado.forEach(registro => {
-        const metaDiariaDoRegistro = getMetaDiariaParaDia(registro.operadoresNoDia);
-
-        // Se NÃO é um dia de exceção, considera para produção acumulada e dias operacionais
-        if (!registro.isExcecao) {
-            producaoAcumulada += registro.producao;
-            metaAcumulada += metaDiariaDoRegistro;
-            diasDeOperacaoConsiderados++; // Conta dias que foram lançados e são operacionais (incluindo domingos trabalhados)
-            totalOperadoresEmDiasOperacionais += registro.operadoresNoDia; // Soma operadores para PHD
-        }
-
-        const phdDiario = (registro.producao > 0 && registro.operadoresNoDia > 0) ? (registro.producao / registro.operadoresNoDia).toFixed(2) : '0.00';
-
-        let saldoDiario;
-        if (registro.isExcecao) { // Se é uma exceção, o saldo é 0
-            saldoDiario = 0;
-        } else { // Caso contrário (dia normal ou domingo trabalhado), calcula o saldo
-            saldoDiario = registro.producao - metaDiariaDoRegistro;
-        }
-
-        const row = historicoTableBody.insertRow();
-        row.insertCell().textContent = formatarData(registro.data);
-        row.insertCell().textContent = registro.producao.toLocaleString('pt-BR');
-        row.insertCell().textContent = registro.operadoresNoDia; // Coluna de operadores
-        row.insertCell().textContent = metaDiariaDoRegistro.toLocaleString('pt-BR'); // Meta Diária do dia
-        row.insertCell().textContent = phdDiario;
-        const saldoCell = row.insertCell();
-        saldoCell.textContent = saldoDiario.toLocaleString('pt-BR');
-        saldoCell.style.color = saldoDiario >= 0 ? 'green' : 'red';
-        saldoCell.style.fontWeight = 'bold';
-
-        const tipoCell = row.insertCell();
-        if (registro.isExcecao) {
-            tipoCell.textContent = 'Exceção';
-            tipoCell.classList.add('excecao-dia');
-        } else {
-            const diaDaSemana = new Date(registro.data + 'T00:00:00').getDay();
-            if (diaDaSemana === 0) {
-                tipoCell.textContent = 'Domingo Trabalhado'; // Novo texto para domingos com produção
-            } else {
-                tipoCell.textContent = 'Normal';
-            }
-        }
-
-        const acoesCell = row.insertCell();
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Excluir';
-        deleteBtn.classList.add('delete-btn');
-        deleteBtn.onclick = () => excluirProducao(registro.data); // Chama a função que usa a API
-        acoesCell.appendChild(deleteBtn);
-    });
-
-    // Saldo Total Acumulado
-    saldoTotalAcumulado = producaoAcumulada - metaAcumulada;
-
-    // NOVO CÁLCULO: Falta para a Meta Mensal
-    const faltaParaMetaMensal = metaMensalTotal - producaoAcumulada;
-    faltaParaMetaMensalElement.textContent = faltaParaMetaMensal.toLocaleString('pt-BR');
-
-    // Dias Restantes no Mês (dias operacionais ainda sem lançamento)
-    let diasRestantesParaProjecao = getDiasDeOperacaoNoMes(anoVisualizado, mesVisualizado, producoesMes) - diasDeOperacaoConsiderados;
-    if (diasRestantesParaProjecao < 0) {
-        diasRestantesParaProjecao = 0;
-    }
-
-    // PHD Médio Mensal (baseado na produção e operadores DOS DIAS CONSIDERADOS)
-    const phdMedioMensal = (producaoAcumulada > 0 && totalOperadoresEmDiasOperacionais > 0) ? (producaoAcumulada / totalOperadoresEmDiasOperacionais).toFixed(2) : '0.00';
-
-
-    producaoAcumuladaElement.textContent = producaoAcumulada.toLocaleString('pt-BR');
-    metaAcumuladaElement.textContent = metaAcumulada.toLocaleString('pt-BR');
-    saldoAcumuladoElement.textContent = saldoTotalAcumulado.toLocaleString('pt-BR');
-    phdMedioMensalElement.textContent = phdMedioMensal;
-    diasOperacaoConsideradosElement.textContent = diasDeOperacaoConsiderados;
-    diasRestantesElement.textContent = diasRestantesParaProjecao;
-
-    saldoAcumuladoElement.classList.remove('positivo', 'negativo');
-    if (saldoTotalAcumulado > 0) {
+    saldoAcumuladoElement.textContent = kpis.saldoAcumulado.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+    if (kpis.saldoAcumulado >= 0) {
+        saldoAcumuladoElement.classList.remove('negativo');
         saldoAcumuladoElement.classList.add('positivo');
-        saldoAcumuladoElement.innerHTML += ' (Positivo)';
-    } else if (saldoTotalAcumulado < 0) {
-        saldoAcumuladoElement.classList.add('negativo');
-        saldoAcumuladoElement.innerHTML += ' (Negativo)';
     } else {
-        saldoAcumuladoElement.style.color = '#333';
-        saldoAcumuladoElement.innerHTML += ' (Na Meta)';
+        saldoAcumuladoElement.classList.remove('positivo');
+        saldoAcumuladoElement.classList.add('negativo');
     }
 
-    // --- Projeção Aprimorada ---
-    if (diasRestantesParaProjecao > 0) {
-        const metaDiariaPadrao = getMetaDiariaParaDia(NUM_OPERADORES_PADRAO);
-        let projecaoTexto = '';
+    phdMedioMensalElement.textContent = kpis.phdMedioMensal.toLocaleString('pt-BR'); // Mantém decimais para PHD
+    diasOperacaoConsideradosElement.textContent = kpis.diasOperacaoConsiderados;
+    diasRestantesElement.textContent = kpis.diasRestantes;
+    faltaParaMetaMensalElement.textContent = kpis.faltaParaMetaMensal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+    totalDiasOperacionaisPrevistosElement.textContent = kpis.totalDiasOperacionaisPrevistos; // ATUALIZA O NOVO ELEMENTO!
 
-        if (producaoAcumulada === 0 && diasDeOperacaoConsiderados === 0) {
-            projecaoTextoElement.textContent = `Ainda não há lançamentos de produção para ${nomeMes} de ${anoVisualizado}. A meta para o mês é de ${metaMensalTotal.toLocaleString('pt-BR')} pacotes. Comece a registrar a produção!`;
-            projecaoTextoElement.style.color = 'blue';
-        } else {
-            // CORREÇÃO AQUI: Cálculo da projeção de superação
-            const producaoTotalProjetada = producaoAcumulada + (metaDiariaPadrao * diasRestantesParaProjecao);
-            let projecaoSuperar = producaoTotalProjetada - metaMensalTotal;
+    // Lógica de projeção aprimorada
+    if (kpis.producaoAcumulada > 0 || kpis.diasOperacaoConsiderados > 0) {
+        if (kpis.diasRestantes > 0) {
+            const projecaoTotal = kpis.producaoAcumulada + (kpis.diasRestantes * NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META);
+            const diferenca = Math.abs(projecaoTotal - kpis.metaMensalTotal);
+            
+            let projecaoMensagem = `Com base na sua produção atual (${kpis.phdMedioMensal.toLocaleString('pt-BR')} pacotes/operador em média), a projeção para o mês é de <strong>${projecaoTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong>, ficando `;
 
-            if (projecaoSuperar < 0) { // Se a projeção de superação é negativa, significa que a meta não será atingida.
-                const pacotesParaRecuperar = Math.abs(projecaoSuperar); // Quanto ainda precisa para bater a meta
-                const pacotesPorDiaParaRecuperar = pacotesParaRecuperar / diasRestantesParaProjecao;
-                const metaDiariaAjustadaParaRecuperar = metaDiariaPadrao + pacotesPorDiaParaRecuperar;
-                const phdAdicionalPorOperador = (pacotesPorDiaParaRecuperar / NUM_OPERADORES_PADRAO).toFixed(2);
-
-                projecaoTexto = `Para atingir a meta mensal, vocês precisam fazer uma média de ${Math.round(metaDiariaAjustadaParaRecuperar).toLocaleString('pt-BR')} pacotes por dia (ou seja, aproximadamente ${phdAdicionalPorOperador} pacotes a mais por operador por dia, considerando ${NUM_OPERADORES_PADRAO} operadores) nos próximos ${diasRestantesParaProjecao} dias de operação.`;
-                projecaoTextoElement.style.color = 'red';
-            } else { // Projeção é positiva ou zero (vai atingir/superar)
-                projecaoTexto = `Com a produção atual, e mantendo o ritmo de ${metaDiariaPadrao.toLocaleString('pt-BR')} pacotes/dia (com ${NUM_OPERADORES_PADRAO} operadores), a projeção é de superar a meta mensal em ${projecaoSuperar.toLocaleString('pt-BR')} pacotes! Continuem assim!`;
-                projecaoTextoElement.style.color = 'green';
-
-                // Adicionar a informação da meta diária mínima para atingir o objetivo, APENAS SE A PROJEÇÃO É POSITIVA
-                // Isso evita redundância quando a projeção já é sobre "atingir a meta" (no caso negativo)
-                const pacotesFaltantesParaMetaMensal = metaMensalTotal - producaoAcumulada; // Recalcula para este bloco
-                let metaDiariaMinimaAjustada = 0;
-                let phdMinimoPorOperador = 0;
-
-                if (pacotesFaltantesParaMetaMensal > 0 && diasRestantesParaProjecao > 0) {
-                    metaDiariaMinimaAjustada = pacotesFaltantesParaMetaMensal / diasRestantesParaProjecao;
-                    if (NUM_OPERADORES_PADRAO > 0) {
-                        phdMinimoPorOperador = (metaDiariaMinimaAjustada / NUM_OPERADORES_PADRAO).toFixed(2);
-                    }
-                }
-
-                if (pacotesFaltantesParaMetaMensal > 0 && diasRestantesParaProjecao > 0) {
-                    projecaoTexto += ` Para *apenas* atingir a meta mensal, vocês precisam de uma média de ${Math.round(metaDiariaMinimaAjustada).toLocaleString('pt-BR')} pacotes por dia (equivalente a ${phdMinimoPorOperador} PHD) nos ${diasRestantesParaProjecao} dias de operação restantes.`;
+            if (projecaoTotal >= kpis.metaMensalTotal) {
+                projecaoMensagem += `<strong>ACIMA ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
+            } else {
+                projecaoMensagem += `<strong>ABAIXO ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
+                
+                // Adiciona a sugestão de meta diária para bater a meta
+                const pacotesParaBaterMeta = kpis.metaMensalTotal - projecaoTotal;
+                if (kpis.diasRestantes > 0 && NUM_OPERADORES_PADRAO > 0) {
+                    const phdNecessario = pacotesParaBaterMeta / (kpis.diasRestantes * NUM_OPERADORES_PADRAO);
+                    projecaoMensagem += ` Para atingir a meta, você precisaria produzir aproximadamente <strong>${pacotesParaBaterMeta.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes adicionais</strong>, com um PHD médio de <strong>${phdNecessario.toFixed(2).toLocaleString('pt-BR')} pacotes/operador</strong> nos ${kpis.diasRestantes} dias restantes.`;
                 }
             }
-
-            projecaoTextoElement.textContent = projecaoTexto;
-        }
-    } else { // Não há mais dias restantes para projeção (mês encerrado)
-        if (saldoTotalAcumulado < 0) {
-            projecaoTextoElement.textContent = 'Mês encerrado com saldo negativo. Analisar desempenho para o próximo mês.';
-            projecaoTextoElement.style.color = 'orange';
+            projecaoTextoElement.innerHTML = projecaoMensagem;
+            
         } else {
-            projecaoTextoElement.textContent = 'Mês encerrado com a meta atingida ou superada! Parabéns!';
-            projecaoTextoElement.style.color = 'blue';
+            // Mês finalizado
+            const status = kpis.producaoAcumulada >= kpis.metaMensalTotal ? 'ACIMA' : 'ABAIXO';
+            const diferenca = Math.abs(kpis.producaoAcumulada - kpis.metaMensalTotal);
+            projecaoTextoElement.innerHTML = `O mês de ${getNomeMes(mesVisualizado)} de ${anoVisualizado} foi finalizado com <strong>${kpis.producaoAcumulada.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong>, ficando <strong>${status} ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
         }
+    } else {
+        projecaoTextoElement.textContent = 'Comece a lançar sua produção para ver a projeção!';
+    }
+
+    // Preenche o histórico da tabela
+    producoesMes.forEach(registro => {
+        const row = historicoTableBody.insertRow();
+        const tipoDia = registro.isExcecao ? 'Exceção' : (new Date(registro.data + 'T00:00:00').getDay() === 0 ? 'Domingo Trabalhado' : 'Normal');
+        const metaDiariaRegistro = registro.isExcecao ? 0 : getMetaDiariaParaDia(registro.operadoresNoDia);
+        const phdDiarioRegistro = registro.operadoresNoDia > 0 ? registro.producao / registro.operadoresNoDia : 0;
+        const saldoDiarioRegistro = registro.producao - metaDiariaRegistro;
+
+        row.insertCell(0).textContent = formatarData(registro.data);
+        row.insertCell(1).textContent = registro.producao.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+        row.insertCell(2).textContent = registro.operadoresNoDia;
+        row.insertCell(3).textContent = metaDiariaRegistro.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+        row.insertCell(4).textContent = phdDiarioRegistro.toFixed(2).toLocaleString('pt-BR');
+        row.insertCell(5).textContent = saldoDiarioRegistro.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+        row.insertCell(6).textContent = tipoDia;
+
+        const acoesCell = row.insertCell(7);
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Excluir';
+        deleteButton.classList.add('delete-btn');
+        deleteButton.onclick = () => excluirProducao(registro.data);
+        acoesCell.appendChild(deleteButton);
+    });
+}
+
+// --- Funções e Event Listeners para o Relatório Analítico ---
+
+// Função para alternar visibilidade das seções
+function toggleSections(showSectionId) {
+    dashboardSection.classList.remove('active');
+    reportSection.classList.remove('active');
+    showDashboardBtn.classList.remove('active');
+    showReportBtn.classList.remove('active');
+
+    if (showSectionId === 'dashboard') {
+        dashboardSection.classList.add('active');
+        showDashboardBtn.classList.add('active');
+        atualizarDashboard(anoVisualizado, mesVisualizado); // Recarrega o dashboard
+    } else if (showSectionId === 'report') {
+        reportSection.classList.add('active');
+        showReportBtn.classList.add('active');
+        // Não atualiza automaticamente o relatório, espera o usuário gerar
     }
 }
 
+showDashboardBtn.addEventListener('click', () => toggleSections('dashboard'));
+showReportBtn.addEventListener('click', () => toggleSections('report'));
 
-// Inicialização: carregar dados e atualizar a interface ao carregar a página
+// Event listener para gerar o relatório
+generateReportBtn.addEventListener('click', async () => {
+    reportStatusElement.textContent = 'Gerando relatório...';
+    reportTableBody.innerHTML = '';
+    reportTableHeader.innerHTML = '<th>KPI</th>'; // Reseta o cabeçalho
+
+    const selectedMonths = Array.from(reportMesesSelect.selectedOptions).map(option => parseInt(option.value));
+    const selectedYear = parseInt(reportAnoSelect.value);
+
+    if (selectedMonths.length === 0 || isNaN(selectedYear)) {
+        alert('Por favor, selecione pelo menos um mês e um ano para gerar o relatório.');
+        reportStatusElement.textContent = '';
+        return;
+    }
+
+    const allKPIs = {}; // Objeto para armazenar KPIs por mês/ano
+
+    // Iterar sobre os meses selecionados e buscar/calcular KPIs
+    for (const mes of selectedMonths) {
+        const producoes = await fetchProducoes(selectedYear, mes);
+        const kpisDoMes = calculateKPIsForMonth(producoes, selectedYear, mes, NUM_OPERADORES_PADRAO, PACOTES_POR_OPERADOR_DIA_META);
+        allKPIs[`${getNomeMes(mes)}/${selectedYear}`] = kpisDoMes;
+    }
+
+    // Nomes dos KPIs para exibir na primeira coluna
+    const kpiNames = {
+        metaMensalTotal: 'Meta Mensal Total (Pacotes)',
+        producaoAcumulada: 'Produção Acumulada (Pacotes)',
+        metaAcumulada: 'Meta Esperada até Hoje (Pacotes)',
+        saldoAcumulado: 'Saldo Acumulado (Pacotes)',
+        faltaParaMetaMensal: 'Falta para Meta (Pacotes)',
+        phdMedioMensal: 'PHD Médio Mensal (Pacotes/Operador)',
+        diasOperacaoConsiderados: 'Dias de Operação Considerados',
+        diasRestantes: 'Dias Restantes no Mês',
+        totalDiasOperacionaisPrevistos: 'Total Dias Operacionais Previstos' // NOVO KPI PARA RELATÓRIO
+    };
+
+    // Adicionar cabeçalhos de coluna para os meses selecionados
+    for (const mesLabel in allKPIs) {
+        const th = document.createElement('th');
+        th.textContent = mesLabel;
+        reportTableHeader.appendChild(th);
+    }
+
+    // Preencher as linhas da tabela com os valores dos KPIs
+    for (const kpiKey in kpiNames) {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th'); // Primeira coluna é o nome do KPI
+        th.textContent = kpiNames[kpiKey];
+        tr.appendChild(th);
+
+        for (const mesLabel in allKPIs) {
+            const td = document.createElement('td');
+            let value = allKPIs[mesLabel][kpiKey];
+
+            // Formatação específica para Saldo e PHD Médio
+            if (kpiKey === 'phdMedioMensal') {
+                 td.textContent = value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else {
+                 td.textContent = value.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais para outros KPIs
+            }
+            td.classList.add('align-right'); // Alinha os valores numéricos à direita
+            tr.appendChild(td);
+        }
+        reportTableBody.appendChild(tr);
+    }
+
+    reportStatusElement.textContent = 'Relatório gerado com sucesso!';
+});
+
+// Event listener para exportar para CSV
+exportCsvBtn.addEventListener('click', () => {
+    const table = reportTable;
+    let csv = [];
+    
+    // Adiciona o cabeçalho
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText);
+    csv.push(headers.join(';')); // Usa ; como separador
+
+    // Adiciona as linhas do corpo
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const rowData = [];
+        // Pega o nome do KPI da primeira célula <th>
+        rowData.push(row.querySelector('th').innerText); 
+        // Pega os valores das demais células <td>
+        Array.from(row.querySelectorAll('td')).forEach(cell => {
+            // Remove ponto de milhar e troca vírgula por ponto para CSV numérico (apenas se for PHD, outros são inteiros)
+            let formattedValue = cell.innerText;
+            if (cell.innerText.includes(',')) { // Checa se tem vírgula (provavelmente um decimal)
+                formattedValue = formattedValue.replace(/\./g, '').replace(',', '.'); // Remove milhar e troca decimal
+            } else {
+                formattedValue = formattedValue.replace(/\./g, ''); // Remove apenas milhar para inteiros
+            }
+            rowData.push(formattedValue);
+        });
+        csv.push(rowData.join(';'));
+    });
+
+    const csvFile = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(csvFile);
+    downloadLink.download = `relatorio_phd_${reportAnoSelect.value}.csv`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    alert('Relatório exportado para CSV!');
+});
+
+
+// --- Inicialização ao carregar a página ---
 document.addEventListener('DOMContentLoaded', async () => { // Marcado como async
     // Carrega as configurações (incluindo NUM_OPERADORES_PADRAO) da API
     const configs = await getConfigsAPI();
@@ -550,6 +701,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Marcado como asyn
     selectMes.value = mesVisualizado;
     selectAno.value = anoVisualizado;
 
-    // Finalmente, atualiza o dashboard com os dados do mês/ano atual
-    await atualizarDashboard(anoVisualizado, mesVisualizado); // Aguarda a atualização
+    // Inicialmente mostra o dashboard
+    toggleSections('dashboard');
 });
