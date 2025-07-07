@@ -297,6 +297,82 @@ table tbody tr:hover {
     text-align: center;
 }
 
+/* --- NOVOS ESTILOS PARA RELATÓRIOS --- */
+.toggle-button {
+    background-color: #17a2b8; /* Cor azul ciano para distinção */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    width: 100%;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-button:hover {
+    background-color: #138496;
+}
+
+.relatorio-section {
+    display: none; /* Inicialmente oculta */
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #fdfdfd;
+}
+
+.relatorio-section h2 {
+    margin-top: 0;
+}
+
+.select-meses-comparar {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.select-meses-comparar label {
+    margin-bottom: 0;
+    font-weight: bold;
+}
+
+.select-meses-comparar select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+.select-meses-comparar button {
+    background-color: #007bff; /* Azul para o botão de comparar */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+.select-meses-comparar button:hover {
+    background-color: #0056b3;
+}
+
+#exportRelatorioBtn {
+    background-color: #28a745; /* Verde para o botão de exportar */
+}
+
+#exportRelatorioBtn:hover {
+    background-color: #218838;
+}
+
 /* Media Queries para responsividade */
 @media (max-width: 768px) {
     .container {
@@ -315,7 +391,11 @@ table tbody tr:hover {
     .config-section input[type="number"],
     .config-section button,
     .select-month-year select,
-    .select-month-year button {
+    .select-month-year button,
+    .toggle-button, /* Novo */
+    .select-meses-comparar select, /* Novo */
+    .select-meses-comparar button /* Novo */
+     {
         width: 100%;
         max-width: none; /* Remove max-width para inputs numéricos */
         box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
@@ -330,6 +410,17 @@ table tbody tr:hover {
         margin-bottom: 10px;
         margin-right: 0;
     }
+
+    /* Novo: Empilha elementos da seção de comparação de meses */
+    .select-meses-comparar label,
+    .select-meses-comparar select,
+    .select-meses-comparar button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+
 
     .input-group.checkbox-group {
         flex-direction: column;
