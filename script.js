@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const backendUrl = 'https://phd-dashboard-backend-python.onrender.com/api';
 
     // Elementos do Dashboard Principal
-    const mainDashboardContent = document.getElementById('main-dashboard-content');
+    const mainContentWrapper = document.getElementById('main-content-wrapper'); // NOVA DIV ENVOLVENDO TUDO
     const toggleRelatorioBtn = document.getElementById('toggleRelatorioBtn');
 
     // Elementos da Seção de Relatórios
@@ -54,8 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Popula os selects de mês e ano
     function populateMonthAndYearSelects() {
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth() + 1; // Mês atual (1-12)
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1; // Mês atual (1-12)
 
         // Popula meses
         const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -97,6 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
         anoComparar1Select.value = currentYear;
         mesComparar2Select.value = (currentMonth - 1 > 0 ? currentMonth - 1 : 12).toString().padStart(2, '0'); // Mês anterior
         anoComparar2Select.value = (currentMonth - 1 > 0 ? currentYear : currentYear - 1); // Ano do mês anterior
+        
+        // Define a data atual no input de produção
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        dataProducaoInput.value = `${year}-${month}-${day}`;
     }
 
     // Carrega as configurações do backend
@@ -163,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalOperadoresRegistrados += prod.operadores_no_dia;
                 // Calcula o PHD diário para cada registro
                 const metaDiaria = prod.operadores_no_dia * pacotesPorOperadorDiaMeta;
-                const phdDiario = prod.producao / prod.operadores_no_dia;
+                const phdDiario = prod.operacao > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
                 totalPHD += phdDiario;
             }
         });
@@ -222,15 +229,22 @@ document.addEventListener('DOMContentLoaded', () => {
         let metaRestante = metaMensal - producaoAcumulada;
 
         // Calcula os dias úteis restantes no mês, considerando exceções e fins de semana
-        for (let i = hoje.getDate() + 1; i <= totalDiasNoMes; i++) {
-            const dataFutura = `${anoAtualNum}-${mes.padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
-            const producaoDoDia = producoes.find(p => p.data === dataFutura);
+        // Só faz a projeção se for o mês/ano atual
+        if (anoAtualNum === hoje.getFullYear() && mesAtualNum === (hoje.getMonth() + 1)) {
+            for (let i = hoje.getDate() + 1; i <= totalDiasNoMes; i++) {
+                const dataFutura = `${anoAtualNum}-${mes.padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+                const producaoDoDia = producoes.find(p => p.data === dataFutura);
 
-            // Se for um dia no futuro e não for fim de semana E não for um dia de exceção já registrado
-            if (new Date(dataFutura + 'T00:00:00') > hoje && !isWeekend(dataFutura) && !(producaoDoDia && producaoDoDia.is_excecao)) {
-                diasRestantesMes++;
+                // Se for um dia no futuro e não for fim de semana E não for um dia de exceção já registrado
+                if (new Date(dataFutura + 'T00:00:00') > hoje && !isWeekend(dataFutura) && !(producaoDoDia && producaoDoDia.is_excecao)) {
+                    diasRestantesMes++;
+                }
             }
+        } else {
+            // Se não é o mês/ano atual, não há dias restantes para projetar
+            diasRestantesMes = 0;
         }
+
 
         let projecaoTexto = '';
         if (metaRestante <= 0) {
@@ -257,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         producoes.forEach(prod => {
             const row = historicoTableBody.insertRow();
             const metaDiaria = prod.operadores_no_dia * pacotesPorOperadorDiaMeta;
-            const phdDiario = prod.operacao > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
+            const phdDiario = prod.operadores_no_dia > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
             const saldoDiario = prod.producao - metaDiaria;
             const tipoDia = prod.is_excecao ? 'Dia de Exceção' : (isWeekend(prod.data) ? 'Fim de Semana' : 'Dia Útil');
 
@@ -342,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(result.message);
             fetchProducoes(); // Recarrega os dados após a adição/atualização
             // Limpa o formulário
-            dataProducaoInput.value = '';
+            // dataProducaoInput.value = ''; // Não limpa a data para facilitar lançamentos sequenciais
             producaoDiariaInput.value = '';
             operadoresNoDiaInput.value = '';
             isExcecaoCheckbox.checked = false;
@@ -379,26 +393,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Lógica para alternar entre Dashboard e Relatórios ---
     toggleRelatorioBtn.addEventListener('click', () => {
-        if (mainDashboardContent.style.display === 'none') {
+        if (mainContentWrapper.style.display === 'none') {
             // Se o dashboard está oculto, mostra ele e oculta o relatório
-            mainDashboardContent.style.display = 'block';
+            mainContentWrapper.style.display = 'block';
             relatorioSection.style.display = 'none';
             toggleRelatorioBtn.textContent = 'Ver Relatórios';
             fetchProducoes(); // Recarrega os dados do dashboard ao voltar
         } else {
             // Se o dashboard está visível, oculta ele e mostra o relatório
-            mainDashboardContent.style.display = 'none';
+            mainContentWrapper.style.display = 'none';
             relatorioSection.style.display = 'block';
             toggleRelatorioBtn.textContent = 'Voltar ao Dashboard';
             // Chama a função para popular e exibir o relatório
-            // Por enquanto, apenas popula os selects
-            populateMonthAndYearSelects();
+            populateMonthAndYearSelects(); // Garante que os selects de comparação estejam atualizados
             renderComparativoMensal([], null, null); // Limpa a tabela ao entrar na seção
         }
     });
 
     closeRelatorioBtn.addEventListener('click', () => {
-        mainDashboardContent.style.display = 'block';
+        mainContentWrapper.style.display = 'block';
         relatorioSection.style.display = 'none';
         toggleRelatorioBtn.textContent = 'Ver Relatórios';
         fetchProducoes(); // Recarrega os dados do dashboard ao voltar
@@ -419,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!prod.is_excecao) {
                 diasUteisTrabalhados++;
                 totalOperadoresRegistrados += prod.operadores_no_dia;
-                const phdDiario = prod.producao / prod.operadores_no_dia;
+                const phdDiario = prod.operadores_no_dia > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
                 totalPHD += phdDiario;
             }
         });
@@ -443,15 +456,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const phdMedio = diasUteisTrabalhados > 0 ? (totalPHD / diasUteisTrabalhados) : 0;
+        const mediaOperadoresDia = diasUteisTrabalhados > 0 ? (totalOperadoresRegistrados / diasUteisTrabalhados) : 0;
         const saldoAcumulado = producaoAcumulada - metaMensal;
 
         return {
-            metaMensal: metaMensal.toLocaleString('pt-BR'),
-            producaoAcumulada: producaoAcumulada.toLocaleString('pt-BR'),
-            saldoAcumulado: saldoAcumulado.toLocaleString('pt-BR'),
-            phdMedio: phdMedio.toFixed(2),
+            metaMensal: metaMensal,
+            producaoAcumulada: producaoAcumulada,
+            saldoAcumulado: saldoAcumulado,
+            phdMedio: phdMedio,
             diasUteisTrabalhados: diasUteisTrabalhados,
-            mediaOperadoresDia: mediaOperadoresDia.toFixed(1) // Adicionei esta linha
+            mediaOperadoresDia: mediaOperadoresDia
         };
     }
 
@@ -513,11 +527,31 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaOperadoresDia: 'Média Operadores/Dia'
         };
 
+        // Formata os valores para exibição na tabela
+        function formatValue(key, value) {
+            if (['metaMensal', 'producaoAcumulada', 'saldoAcumulado'].includes(key)) {
+                return value.toLocaleString('pt-BR');
+            } else if (['phdMedio', 'mediaOperadoresDia'].includes(key)) {
+                return value.toFixed(2);
+            }
+            return value; // Para diasUteisTrabalhados
+        }
+
         for (const key in kpiLabels) {
             const row = tabelaComparativoMensal.insertRow();
             row.insertCell(0).textContent = kpiLabels[key];
-            row.insertCell(1).textContent = kpis1[key];
-            row.insertCell(2).textContent = kpis2[key];
+            const cell1 = row.insertCell(1);
+            cell1.textContent = formatValue(key, kpis1[key]);
+            const cell2 = row.insertCell(2);
+            cell2.textContent = formatValue(key, kpis2[key]);
+
+            // Adiciona a classe de cor para o Saldo Acumulado na tabela de relatório
+            if (key === 'saldoAcumulado') {
+                if (kpis1[key] > 0) cell1.classList.add('positivo');
+                else if (kpis1[key] < 0) cell1.classList.add('negativo');
+                if (kpis2[key] > 0) cell2.classList.add('positivo');
+                else if (kpis2[key] < 0) cell2.classList.add('negativo');
+            }
         }
     }
 
@@ -525,18 +559,26 @@ document.addEventListener('DOMContentLoaded', () => {
     exportRelatorioBtn.addEventListener('click', () => {
         const table = document.getElementById('tabelaComparativoMensal');
         let csv = [];
-        for (let i = 0; i < table.rows.length; i++) {
+        // Adiciona cabeçalhos (KPI, Mês 1, Mês 2)
+        let headerRow = [];
+        for(let i=0; i<table.rows[0].cells.length; i++) {
+            headerRow.push(table.rows[0].cells[i].textContent);
+        }
+        csv.push(headerRow.join(';')); // Usa ponto e vírgula como separador para CSV em português
+
+        // Adiciona os dados do corpo da tabela
+        for (let i = 1; i < table.rows.length; i++) { // Começa do 1 para pular o cabeçalho
             let row = [];
             for (let j = 0; j < table.rows[i].cells.length; j++) {
                 let cellText = table.rows[i].cells[j].textContent;
-                // Escapa vírgulas e aspas duplas dentro do texto da célula
+                // Escapa ponto e vírgula e aspas duplas dentro do texto da célula
                 cellText = cellText.replace(/"/g, '""'); // Substitui " por ""
-                if (cellText.includes(',') || cellText.includes('\n')) {
-                    cellText = `"${cellText}"`; // Coloca entre aspas se contiver vírgula ou quebra de linha
+                if (cellText.includes(';') || cellText.includes('\n')) {
+                    cellText = `"${cellText}"`; // Coloca entre aspas se contiver ponto e vírgula ou quebra de linha
                 }
                 row.push(cellText);
             }
-            csv.push(row.join(','));
+            csv.push(row.join(';')); // Usa ponto e vírgula como separador
         }
         const csvString = csv.join('\n');
         const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });

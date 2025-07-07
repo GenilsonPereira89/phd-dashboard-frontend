@@ -17,17 +17,16 @@ body {
     max-width: 900px;
 }
 
-/* Estilo para o contêiner da logo - centraliza horizontalmente */
 .logo-container {
-    text-align: center; /* Centraliza o conteúdo (a imagem) horizontalmente */
-    margin-bottom: 20px; /* Espaçamento abaixo da logo */
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .shopee-logo {
-    max-width: 120px; /* Reduz o tamanho máximo da logo para 120px */
-    height: auto; /* Mantém a proporção da imagem */
-    display: block; /* Garante que a imagem se comporte como um bloco para centralização */
-    margin: 0 auto; /* Centraliza a imagem dentro do seu contêiner */
+    max-width: 120px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
 
 h1, h2 {
@@ -36,8 +35,6 @@ h1, h2 {
     margin-bottom: 20px;
 }
 
-/* Renomeei 'input-section' para 'form-section' no HTML, então ajusto aqui */
-/* E adicionei 'historico-section' e 'dashboard-section' para as bordas e fundo */
 .form-section, .dashboard-section, .historico-section, .config-section, .select-month-year {
     margin-bottom: 30px;
     padding: 20px;
@@ -46,30 +43,26 @@ h1, h2 {
     background-color: #fdfdfd;
 }
 
-/* Estilo para os grupos de input */
 .input-group {
-    margin-bottom: 15px; /* Espaço entre os grupos de input */
+    margin-bottom: 15px;
 }
 
-/* Estilo para labels */
-.input-group label { /* Agora seleciona labels dentro de input-group */
+.input-group label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
 }
 
-/* Estilo para inputs de data e número no formulário de registro */
 .form-section input[type="date"],
 .form-section input[type="number"],
-.form-section select { /* Adicionei select caso tenha um no futuro ou seja necessário */
-    width: calc(100% - 22px); /* Ajusta a largura para considerar o padding e a borda */
+.form-section select {
+    width: calc(100% - 22px);
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-/* Ajuste para o grupo de checkbox */
-.input-group.checkbox-group { /* Usei .input-group.checkbox-group no HTML */
+.input-group.checkbox-group {
     display: flex;
     align-items: center;
     margin-bottom: 15px;
@@ -85,9 +78,7 @@ h1, h2 {
     font-weight: normal;
 }
 
-
-/* Estilo para botões de adicionar produção */
-.form-section button { /* Ajsutado para form-section */
+.form-section button {
     background-color: #007bff;
     color: white;
     padding: 12px 20px;
@@ -103,14 +94,13 @@ h1, h2 {
     background-color: #0056b3;
 }
 
-/* Estilo para a seção de configurações */
 .config-section {
     text-align: center;
 }
 
 .config-section input[type="number"] {
     width: calc(100% - 22px);
-    max-width: 200px; /* Limita a largura para não ficar muito grande */
+    max-width: 200px;
     padding: 10px;
     margin-bottom: 15px;
     border: 1px solid #ccc;
@@ -120,7 +110,7 @@ h1, h2 {
 }
 
 .config-section button {
-    background-color: #28a745; /* Cor verde para distinção */
+    background-color: #28a745;
     color: white;
     padding: 10px 15px;
     border: none;
@@ -128,24 +118,24 @@ h1, h2 {
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.3s ease;
+    margin-top: 10px; /* Adicionado para afastar do input */
 }
 
 .config-section button:hover {
     background-color: #218838;
 }
 
-/* Estilo para a seção de seleção de mês/ano */
-.select-month-year { /* Usei .select-month-year no HTML */
+.select-month-year {
     text-align: center;
-    display: flex; /* Para alinhar labels, selects e botão */
+    display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap; /* Permite quebrar linha em telas menores */
-    gap: 15px; /* Espaço entre os elementos */
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .select-month-year label {
-    margin-bottom: 0; /* Remove margem inferior para alinhamento */
+    margin-bottom: 0;
     font-weight: bold;
 }
 
@@ -157,7 +147,7 @@ h1, h2 {
 }
 
 .select-month-year button {
-    background-color: #6c757d; /* Cor cinza para visualização */
+    background-color: #6c757d;
     color: white;
     padding: 10px 15px;
     border: none;
@@ -171,12 +161,11 @@ h1, h2 {
     background-color: #5a6268;
 }
 
-/* Cards de KPI no dashboard */
 .kpis {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
-    gap: 15px; /* Espaço entre os cartões */
+    gap: 15px;
     margin-top: 20px;
 }
 
@@ -186,8 +175,8 @@ h1, h2 {
     border-radius: 5px;
     padding: 15px;
     text-align: center;
-    flex: 1 1 calc(33% - 30px); /* 3 cards por linha para telas maiores, ajusta a largura */
-    min-width: 180px; /* Garante um tamanho mínimo */
+    flex: 1 1 calc(33% - 30px);
+    min-width: 180px;
     box-shadow: 0 1px 5px rgba(0,0,0,0.05);
 }
 
@@ -208,10 +197,10 @@ hr {
     border: 0;
     height: 1px;
     background-color: #ddd;
-    margin: 40px 0;
+    margin: 30px 0; /* Ajustado para espaçamento melhor */
 }
 
-.dashboard-section p { /* Isso se aplica a outros parágrafos dentro do dashboard, como a projeção */
+.dashboard-section p {
     font-size: 1.1em;
     margin-bottom: 10px;
 }
@@ -220,7 +209,6 @@ hr {
     color: #007bff;
 }
 
-/* Estilos de cor para o saldo acumulado */
 #saldoAcumulado.positivo {
     color: green;
     font-weight: bold;
@@ -231,7 +219,6 @@ hr {
     font-weight: bold;
 }
 
-/* Estilos da tabela de histórico */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -247,7 +234,7 @@ table th, table td {
 table th {
     background-color: #f2f2f2;
     font-weight: bold;
-    white-space: nowrap; /* Evita quebra de linha nos cabeçalhos */
+    white-space: nowrap;
 }
 
 table tbody tr:nth-child(even) {
@@ -258,9 +245,8 @@ table tbody tr:hover {
     background-color: #e9e9e9;
 }
 
-/* Estilo para o botão de exclusão na tabela */
 .delete-btn {
-    background-color: #dc3545; /* Vermelho */
+    background-color: #dc3545;
     color: white;
     border: none;
     padding: 5px 10px;
@@ -274,9 +260,8 @@ table tbody tr:hover {
     background-color: #c82333;
 }
 
-/* Estilo para o texto de "Dia de Exceção" na tabela */
 .excecao-dia {
-    color: #6c757d; /* Cinza para indicar exceção */
+    color: #6c757d;
     font-style: italic;
     font-size: 0.9em;
 }
@@ -285,21 +270,21 @@ table tbody tr:hover {
     font-style: italic;
     color: #555;
     margin-top: 15px;
-    text-align: center; /* Centraliza o texto de projeção */
+    text-align: center;
 }
 
 .config-info {
     font-size: 0.9em;
     color: #666;
-    margin-top: -10px; /* Reduz espaço entre o botão e a info */
+    margin-top: 15px; /* Ajustado para melhor espaçamento */
     margin-bottom: 20px;
     line-height: 1.4;
     text-align: center;
 }
 
-/* --- NOVOS ESTILOS PARA RELATÓRIOS --- */
+/* --- ESTILOS PARA RELATÓRIOS --- */
 .toggle-button {
-    background-color: #17a2b8; /* Cor azul ciano para distinção */
+    background-color: #17a2b8;
     color: white;
     padding: 10px 15px;
     border: none;
@@ -315,8 +300,9 @@ table tbody tr:hover {
     background-color: #138496;
 }
 
-.relatorio-section {
-    display: none; /* Inicialmente oculta */
+/* Oculta a seção de relatório por padrão */
+#relatorio-section {
+    display: none;
     margin-bottom: 30px;
     padding: 20px;
     border: 1px solid #eee;
@@ -331,11 +317,11 @@ table tbody tr:hover {
 .select-meses-comparar {
     text-align: center;
     display: flex;
-    align-items: center;
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 15px;
     margin-bottom: 20px;
+    align-items: center; /* Adicionado para alinhar elementos verticalmente */
 }
 
 .select-meses-comparar label {
@@ -351,7 +337,7 @@ table tbody tr:hover {
 }
 
 .select-meses-comparar button {
-    background-color: #007bff; /* Azul para o botão de comparar */
+    background-color: #007bff;
     color: white;
     padding: 10px 15px;
     border: none;
@@ -366,7 +352,7 @@ table tbody tr:hover {
 }
 
 #exportRelatorioBtn {
-    background-color: #28a745; /* Verde para o botão de exportar */
+    background-color: #28a745;
 }
 
 #exportRelatorioBtn:hover {
@@ -379,12 +365,10 @@ table tbody tr:hover {
         padding: 15px;
     }
     
-    /* Ajustes para telas menores nos cartões KPI */
     .kpi-card {
-        flex: 1 1 calc(50% - 30px); /* 2 cards por linha em telas menores */
+        flex: 1 1 calc(50% - 30px);
     }
 
-    /* Deixa inputs e botões em 100% da largura em telas menores */
     .form-section input[type="date"],
     .form-section input[type="number"],
     .form-section button,
@@ -392,16 +376,14 @@ table tbody tr:hover {
     .config-section button,
     .select-month-year select,
     .select-month-year button,
-    .toggle-button, /* Novo */
-    .select-meses-comparar select, /* Novo */
-    .select-meses-comparar button /* Novo */
-     {
+    .toggle-button,
+    .select-meses-comparar select,
+    .select-meses-comparar button {
         width: 100%;
-        max-width: none; /* Remove max-width para inputs numéricos */
-        box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
+        max-width: none;
+        box-sizing: border-box;
     }
 
-    /* Empilha os elementos da seção de seleção de mês em telas menores */
     .select-month-year label,
     .select-month-year select,
     .select-month-year button {
@@ -411,7 +393,6 @@ table tbody tr:hover {
         margin-right: 0;
     }
 
-    /* Novo: Empilha elementos da seção de comparação de meses */
     .select-meses-comparar label,
     .select-meses-comparar select,
     .select-meses-comparar button {
@@ -421,7 +402,6 @@ table tbody tr:hover {
         margin-right: 0;
     }
 
-
     .input-group.checkbox-group {
         flex-direction: column;
         align-items: flex-start;
@@ -430,7 +410,6 @@ table tbody tr:hover {
         margin-bottom: 5px;
     }
     
-    /* Ajuste para a tabela em telas muito pequenas */
     table, thead, tbody, th, td, tr {
         display: block;
     }
@@ -460,11 +439,10 @@ table tbody tr:hover {
         text-align: left;
         font-weight: bold;
     }
-    /* Mapeamento dos cabeçalhos para os dados */
     table td:nth-of-type(1):before { content: "Data"; }
     table td:nth-of-type(2):before { content: "Produção (Pacotes)"; }
-    table td:nth-of-type(3):before { content: "Operadores"; } /* Nova coluna */
-    table td:nth-of-type(4):before { content: "Meta Diária"; } /* Nova coluna */
+    table td:nth-of-type(3):before { content: "Operadores"; }
+    table td:nth-of-type(4):before { content: "Meta Diária"; }
     table td:nth-of-type(5):before { content: "PHD Diário"; }
     table td:nth-of-type(6):before { content: "Saldo Diário"; }
     table td:nth-of-type(7):before { content: "Tipo de Dia"; }
