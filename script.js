@@ -5,7 +5,7 @@ const DIAS_OPERACAO_SEMANA = 6; // Esta constante serve mais para informação a
 
 // URL base do seu backend - MUITO IMPORTANTE!
 // QUANDO FOR PARA O RENDER, ESTA URL MUDARÁ PARA O ENDEREÇO DO SEU BACKEND NO RENDER.
-const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api'; // <-- ALTERAÇÃO AQUI!
+const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api';
 
 // Elementos HTML (seletores)
 const dataInput = document.getElementById('data');
@@ -176,29 +176,6 @@ function getNomeMes(mesNumero) {
     return data.toLocaleDateString('pt-BR', { month: 'long' });
 }
 
-// Função para calcular dias de operação no mês, *ignorando os feriados já lançados*
-// Agora leva em conta os operadoresNoDia de cada registro para calcular a meta do mês
-function getDiasDeOperacaoNoMes(ano, mes, producoesDoMes) {
-    let count = 0;
-    const date = new Date(ano, mes - 1, 1);
-    while (date.getMonth() === mes - 1) {
-        const dayOfWeek = date.getDay();
-        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
-
-        // Um dia é considerado operacional se:
-        // 1. Não for domingo E não for uma exceção lançada
-        // OU
-        // 2. For domingo E tiver um registro de produção E NÃO for uma exceção (ou seja, foi trabalhado)
-        if ((dayOfWeek !== 0 && !(registroParaEsteDia && registroParaEsteDia.isExcecao)) ||
-            (dayOfWeek === 0 && registroParaEsteDia && !registroParaEsteDia.isExcecao)) {
-            count++;
-        }
-        date.setDate(date.getDate() + 1);
-    }
-    return count;
-}
-
 // Função para obter a META DIÁRIA para um dia específico, considerando os operadores daquele dia
 function getMetaDiariaParaDia(operadores) {
     return operadores * PACOTES_POR_OPERADOR_DIA_META;
@@ -208,81 +185,103 @@ function getMetaDiariaParaDia(operadores) {
 // Esta função encapsula a lógica de cálculo de KPIs, tornando-a reutilizável
 function calculateKPIsForMonth(producoesDoMes, ano, mes, numOperadoresPadrao, pacotesPorOperadorDiaMeta) {
     let producaoAcumulada = 0;
-    let diasDeOperacaoConsiderados = 0;
-    let metaAcumulada = 0; // Meta esperada até o dia atual (ou o último dia do mês para relatório)
-    let saldoTotalAcumulado = 0;
-    let totalOperadoresEmDiasOperacionais = 0; // Para o PHD médio
+    let diasDeOperacaoConsiderados = 0; // Dias com registros de produção que NÃO são exceção
+    let totalOperadoresEmDiasOperacionais = 0; // Para o PHD médio, com base em operadores reais dos registros
 
     // Garante que as produções estão ordenadas por data
     producoesDoMes.sort((a, b) => new Date(a.data) - new Date(b.data));
 
-    // --- CÁLCULO DA META MENSAL TOTAL E KPI's Diários ---
+    const hoje = new Date(); // Data atual para cálculos (horas, minutos, etc. zerados para comparação de data)
+    hoje.setHours(0, 0, 0, 0);
+
+    // --- CÁLCULO DA META MENSAL TOTAL POTENCIAL (para o mês inteiro) ---
     let metaMensalTotal = 0;
-    let diasUteisRestantes = 0;
-    
-    const hoje = new Date(); // Data atual para cálculo de dias restantes e meta acumulada
-    // Ajuste para usar o último dia do mês para o cálculo de meta acumulada em relatórios históricos
-    const ultimoDiaDoMes = new Date(ano, mes, 0).getDate(); // Último dia do mês (1 a 31)
+    const totalDiasNoMes = new Date(ano, mes, 0).getDate(); // Último dia do mês (ex: 31 para julho)
 
-    const dataIteracao = new Date(ano, mes - 1, 1); // Começa no primeiro dia do mês
-    while (dataIteracao.getMonth() === mes - 1) {
-        const dayOfWeek = dataIteracao.getDay();
-        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(dataIteracao.getDate()).padStart(2, '0')}`;
+    for (let day = 1; day <= totalDiasNoMes; day++) {
+        const currentDate = new Date(ano, mes - 1, day);
+        const dayOfWeek = currentDate.getDay(); // 0 = Domingo, 1 = Segunda...
+        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
+        const isExcecaoDia = registroParaEsteDia ? registroParaEsteDia.isExcecao : false;
 
-        let operadoresNoDiaAtual = numOperadoresPadrao; // Padrão
-        let isExcecaoDia = false;
-
-        if (registroParaEsteDia) {
-            isExcecaoDia = registroParaEsteDia.isExcecao;
-            if (!isExcecaoDia) { // Se tem registro e NÃO é exceção
-                operadoresNoDiaAtual = registroParaEsteDia.operadoresNoDia;
-                producaoAcumulada += registroParaEsteDia.producao; // Acumula produção para o mês
-                diasDeOperacaoConsiderados++;
-                totalOperadoresEmDiasOperacionais += operadoresNoDiaAtual;
-            }
-        } else { // Dia futuro ou sem registro
-            // Se for domingo, não considera para operadores padrão a menos que tenha sido lançado como trabalhado
-            if (dayOfWeek === 0) { // Domingo
-                operadoresNoDiaAtual = 0;
-            }
-            // Para dias úteis (seg-sab) que ainda não têm registro
-            // operadoresNoDiaAtual já é o NUM_OPERADORES_PADRAO
+        // Um dia contribui para a metaMensalTotal se:
+        // 1. For um dia de semana (seg-sab) E não for uma exceção explícita.
+        // 2. OU For um domingo E tiver um registro de produção E NÃO for uma exceção (foi trabalhado).
+        if ((dayOfWeek !== 0 && !isExcecaoDia) || (dayOfWeek === 0 && registroParaEsteDia && !isExcecaoDia)) {
+            // Para a meta geral do mês, usa operadores padrão, a menos que um domingo tenha sido especificamente trabalhado.
+            const operatorsForMeta = (dayOfWeek === 0 && registroParaEsteDia) ? registroParaEsteDia.operadoresNoDia : numOperadoresPadrao;
+            metaMensalTotal += operatorsForMeta * pacotesPorOperadorDiaMeta;
         }
-
-        const metaDiariaCalculada = operadoresNoDiaAtual * pacotesPorOperadorDiaMeta;
-
-        // Se o dia não é exceção (ou seja, é um dia de trabalho ou um domingo trabalhado)
-        if (!isExcecaoDia) {
-            metaMensalTotal += metaDiariaCalculada;
-        }
-
-        // Calcula a meta acumulada (meta esperada até este dia do mês)
-        // A meta acumulada deve considerar apenas os dias até "hoje" ou até o último dia do mês para o relatório completo
-        const dataAtualIteracao = new Date(dataString + 'T00:00:00');
-        if (dataAtualIteracao <= hoje || dataIteracao.getDate() <= ultimoDiaDoMes) { // Verifica se o dia já passou ou é o dia atual
-            if (!isExcecaoDia) {
-                metaAcumulada += metaDiariaCalculada;
-            }
-        }
-        
-        // Contagem de dias úteis restantes (apenas para o mês atual, não para meses históricos completos)
-        // Se o dia é futuro e não é domingo, considera-o um dia útil restante
-        if (dataIteracao > hoje && dayOfWeek !== 0 && !isExcecaoDia) {
-            diasUteisRestantes++;
-        }
-        
-        dataIteracao.setDate(dataIteracao.getDate() + 1);
     }
 
-    // Recalcula saldoTotalAcumulado após loop completo para precisão
-    saldoTotalAcumulado = producaoAcumulada - metaAcumulada;
+    // --- CÁLCULO DA META ESPERADA ATÉ HOJE (metaAcumulada) ---
+    // Esta é a meta ideal acumulada para os dias que já passaram no mês (ou o mês inteiro se for um mês histórico)
+    let metaAcumulada = 0;
+    const isCurrentMonth = (ano === hoje.getFullYear() && mes === hoje.getMonth() + 1);
 
+    for (let day = 1; day <= totalDiasNoMes; day++) {
+        const currentDate = new Date(ano, mes - 1, day);
+        currentDate.setHours(0, 0, 0, 0); // Zera hora para comparação de data
+
+        // Se for o mês atual, só acumula a meta para dias até "hoje" (inclusive)
+        // Para meses passados, acumula para o mês inteiro.
+        if (isCurrentMonth && currentDate > hoje) {
+            continue; // Pula dias futuros se for o mês atual
+        }
+
+        const dayOfWeek = currentDate.getDay();
+        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
+        const isExcecaoDia = registroParaEsteDia ? registroParaEsteDia.isExcecao : false;
+
+        // Aplica a mesma lógica de dias úteis/trabalhados que para metaMensalTotal
+        if ((dayOfWeek !== 0 && !isExcecaoDia) || (dayOfWeek === 0 && registroParaEsteDia && !isExcecaoDia)) {
+            const operatorsForMeta = (dayOfWeek === 0 && registroParaEsteDia) ? registroParaEsteDia.operadoresNoDia : numOperadoresPadrao;
+            metaAcumulada += operatorsForMeta * pacotesPorOperadorDiaMeta;
+        }
+    }
+
+    // --- CÁLCULO DA PRODUÇÃO ACUMULADA REAL E OUTROS KPI's baseados em registros reais ---
+    for (const registro of producoesDoMes) {
+        if (!registro.isExcecao) { // Só considera dias que não são exceção
+            producaoAcumulada += registro.producao;
+            diasDeOperacaoConsiderados++;
+            totalOperadoresEmDiasOperacionais += registro.operadoresNoDia;
+        }
+    }
+
+    const saldoTotalAcumulado = producaoAcumulada - metaAcumulada;
     const phdMedioMensal = totalOperadoresEmDiasOperacionais > 0
         ? producaoAcumulada / totalOperadoresEmDiasOperacionais
         : 0;
 
     const faltaParaMetaMensal = Math.max(0, metaMensalTotal - producaoAcumulada);
+
+    // --- CÁLCULO DE DIAS RESTANTES NO MÊS PARA PROJEÇÃO ---
+    let diasRestantes = 0;
+    for (let day = 1; day <= totalDiasNoMes; day++) {
+        const currentDate = new Date(ano, mes - 1, day);
+        currentDate.setHours(0, 0, 0, 0); // Zera hora para comparação
+
+        // Só conta dias estritamente NO FUTURO a partir de "hoje"
+        if (currentDate <= hoje) {
+            continue;
+        }
+
+        const dayOfWeek = currentDate.getDay();
+        const dataString = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const registroParaEsteDia = producoesDoMes.find(p => p.data === dataString);
+        const isExcecaoDia = registroParaEsteDia ? registroParaEsteDia.isExcecao : false;
+
+        // Um dia futuro é considerado "restante" se for um dia de semana (seg-sab) e não for uma exceção explícita.
+        // Domigos futuros não são contados a menos que já exista um registro indicando que será trabalhado (cenário raro para futuro)
+        if (dayOfWeek !== 0 && !isExcecaoDia) {
+            diasRestantes++;
+        } else if (dayOfWeek === 0 && registroParaEsteDia && !isExcecaoDia) { // Caso raro de domingo futuro já registrado como trabalhado
+            diasRestantes++;
+        }
+    }
 
     return {
         metaMensalTotal: Math.round(metaMensalTotal),
@@ -291,7 +290,7 @@ function calculateKPIsForMonth(producoesDoMes, ano, mes, numOperadoresPadrao, pa
         saldoAcumulado: saldoTotalAcumulado,
         phdMedioMensal: parseFloat(phdMedioMensal.toFixed(2)),
         diasOperacaoConsiderados: diasDeOperacaoConsiderados,
-        diasRestantes: diasUteisRestantes, // Isso será 0 para meses passados
+        diasRestantes: diasRestantes,
         faltaParaMetaMensal: Math.round(faltaParaMetaMensal)
     };
 }
@@ -481,16 +480,15 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
     faltaParaMetaMensalElement.textContent = kpis.faltaParaMetaMensal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
 
     // Lógica de projeção
-    const diasCorridos = new Date().getDate();
-    const totalDiasNoMes = new Date(anoVisualizado, mesVisualizado, 0).getDate(); // Último dia do mês
-    const mediaDiariaAtual = kpis.producaoAcumulada / kpis.diasOperacaoConsiderados;
-
-    if (kpis.producaoAcumulada > 0 && kpis.diasOperacaoConsiderados > 0) {
+    if (kpis.producaoAcumulada > 0 || kpis.diasOperacaoConsiderados > 0) {
         if (kpis.diasRestantes > 0) {
-            const projecaoTotal = kpis.producaoAcumulada + (mediaDiariaAtual * kpis.diasRestantes);
+            // Projeção baseada na produção acumulada e na meta dos dias restantes com operadores padrão
+            const projecaoTotal = kpis.producaoAcumulada + (kpis.diasRestantes * NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META);
             const status = projecaoTotal >= kpis.metaMensalTotal ? 'ACIMA' : 'ABAIXO';
             const diferenca = Math.abs(projecaoTotal - kpis.metaMensalTotal);
-            projecaoTextoElement.innerHTML = `Com base na sua produção atual (${mediaDiariaAtual.toFixed(2).toLocaleString('pt-BR')} pacotes/dia em média), a projeção para o mês é de <strong>${projecaoTotal.toFixed(0).toLocaleString('pt-BR')} pacotes</strong>, ficando <strong>${status} ${diferenca.toFixed(0).toLocaleString('pt-BR')} pacotes</strong> da meta mensal.`;
+            
+            projecaoTextoElement.innerHTML = `Com base na sua produção atual (${kpis.phdMedioMensal.toLocaleString('pt-BR')} pacotes/operador em média), a projeção para o mês é de <strong>${projecaoTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong>, ficando <strong>${status} ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
+            
         } else {
             // Mês finalizado
             const status = kpis.producaoAcumulada >= kpis.metaMensalTotal ? 'ACIMA' : 'ABAIXO';
