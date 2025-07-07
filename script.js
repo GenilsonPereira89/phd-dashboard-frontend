@@ -7,32 +7,32 @@ const DIAS_OPERACAO_SEMANA = 6; // Esta constante serve mais para informação a
 // QUANDO FOR PARA O RENDER, ESTA URL MUDARÁ PARA O ENDEREÇO DO SEU BACKEND NO RENDER.
 const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api'; // <-- ALTERAÇÃO AQUI!
 
-// Elementos HTML (seletores)
-const dataInput = document.getElementById('data');
-const producaoDiariaInput = document.getElementById('producaoDiaria');
-const isExcecaoCheckbox = document.getElementById('isExcecao');
-const operadoresNoDiaInput = document.getElementById('operadoresNoDia'); // NOVO: Input para operadores do dia
-const addProducaoBtn = document.getElementById('addProducaoBtn');
-const historicoTableBody = document.getElementById('historicoTableBody');
+// Elementos HTML (seletores) - AGORA SERÃO DEFINIDOS DENTRO DO DOMContentLoaded
+let dataInput;
+let producaoDiariaInput;
+let isExcecaoCheckbox;
+let operadoresNoDiaInput;
+let addProducaoBtn;
+let historicoTableBody;
 
-const mesAtualElement = document.getElementById('mesAtual');
-const metaMensalTotalElement = document.getElementById('metaMensalTotal');
-const producaoAcumuladaElement = document.getElementById('producaoAcumulada');
-const metaAcumuladaElement = document.getElementById('metaAcumulada'); // Agora exibe "Meta Esperada até Hoje" no HTML
-const saldoAcumuladoElement = document.getElementById('saldoAcumulado');
-const faltaParaMetaMensalElement = document.getElementById('faltaParaMetaMensal');
-const phdMedioMensalElement = document.getElementById('phdMedioMensal');
-const totalDiasOperacionaisPrevistosElement = document.getElementById('totalDiasOperacionaisPrevistos');
-const diasOperacaoConsideradosElement = document.getElementById('diasOperacaoConsiderados');
-const diasRestantesElement = document.getElementById('diasRestantes');
-const projecaoTextoElement = document.getElementById('projecaoTexto');
+let mesAtualElement;
+let metaMensalTotalElement;
+let producaoAcumuladaElement;
+let metaAcumuladaElement;
+let saldoAcumuladoElement;
+let faltaParaMetaMensalElement;
+let phdMedioMensalElement;
+let totalDiasOperacionaisPrevistosElement;
+let diasOperacaoConsideradosElement;
+let diasRestantesElement;
+let projecaoTextoElement;
 
-const selectMes = document.getElementById('selectMes');
-const selectAno = document.getElementById('selectAno');
-const visualizarMesBtn = document.getElementById('visualizarMesBtn');
+let selectMes;
+let selectAno;
+let visualizarMesBtn;
 
-const numOperadoresGlobalInput = document.getElementById('numOperadores');
-const updateConfigBtn = document.getElementById('updateConfigBtn');
+let numOperadoresGlobalInput;
+let updateConfigBtn;
 
 let anoVisualizado;
 let mesVisualizado;
@@ -374,62 +374,8 @@ async function carregarEExibirDados() {
 }
 
 // --- Listeners de Eventos ---
-addProducaoBtn.addEventListener('click', async () => {
-    const data = dataInput.value;
-    const producaoDiaria = parseInt(producaoDiariaInput.value);
-    const operadoresNoDia = parseInt(operadoresNoDiaInput.value); // Pega o valor do novo input
-    const isExcecao = isExcecaoCheckbox.checked;
-
-    if (!data || isNaN(producaoDiaria) || producaoDiaria < 0 || isNaN(operadoresNoDia) || operadoresNoDia < 0) {
-        alert('Por favor, preencha todos os campos com valores válidos.');
-        return;
-    }
-
-    const dataObj = new Date(data + 'T12:00:00'); // Adiciona T12:00:00 para evitar problemas de fuso horário
-    const diaDaSemana = dataObj.getDay(); // 0 = Domingo, 6 = Sábado
-    const isDomingo = diaDaSemana === 0;
-
-    // Se for um domingo e não estiver marcado como exceção, considera como dia útil trabalhado.
-    // Caso contrário, usa a flag de exceção.
-    const tipoDia = isExcecao ? 'Exceção' : (isDomingo ? 'Trabalhado - Domingo' : 'Normal');
-
-    const producaoData = {
-        data: data,
-        producao_diaria: producaoDiaria,
-        operadores_no_dia: operadoresNoDia, // Salva o valor de operadores do dia
-        tipo_dia: tipoDia
-    };
-
-    await addProducaoAPI(producaoData);
-    await carregarEExibirDados();
-    producaoDiariaInput.value = ''; // Limpa o campo de produção
-    // Não limpa dataInput para facilitar lançamentos sequenciais
-    // operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO; // Mantém o padrão ou ajusta se preferir limpar
-    isExcecaoCheckbox.checked = false; // Desmarca a exceção
-});
-
-visualizarMesBtn.addEventListener('click', async () => {
-    anoVisualizado = parseInt(selectAno.value);
-    mesVisualizado = parseInt(selectMes.value);
-    await carregarEExibirDados();
-});
-
-updateConfigBtn.addEventListener('click', async () => {
-    const novoNumOperadores = parseInt(numOperadoresGlobalInput.value);
-    if (isNaN(novoNumOperadores) || novoNumOperadores < 1) {
-        alert('Por favor, insira um número de operadores padrão válido (maior que zero).');
-        return;
-    }
-    const updatedConfig = await updateConfigsAPI(novoNumOperadores);
-    if (updatedConfig) {
-        NUM_OPERADORES_PADRAO = updatedConfig.num_operadores_padrao;
-        // Atualiza o valor no input de lançamento também
-        operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO;
-        alert('Número de Operadores Padrão atualizado com sucesso!');
-        carregarEExibirDados(); // Recarrega os dados com a nova configuração
-    }
-});
-
+// Os listeners de eventos agora são adicionados DENTRO do DOMContentLoaded
+// para garantir que os elementos já existem.
 
 // --- Inicialização da página ---
 function popularSeletoresDeMesAno() {
@@ -447,11 +393,38 @@ function popularSeletoresDeMesAno() {
     selectAno.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
 }
 
-document.addEventListener('DOMContentLoaded', async () => { // Marcado como async
+document.addEventListener('DOMContentLoaded', async () => {
+    // SELEÇÃO DOS ELEMENTOS HTML MOVIDA PARA AQUI
+    dataInput = document.getElementById('data');
+    producaoDiariaInput = document.getElementById('producaoDiaria');
+    isExcecaoCheckbox = document.getElementById('isExcecao');
+    operadoresNoDiaInput = document.getElementById('operadoresNoDia');
+    addProducaoBtn = document.getElementById('addProducaoBtn');
+    historicoTableBody = document.getElementById('historicoTableBody');
+
+    mesAtualElement = document.getElementById('mesAtual');
+    metaMensalTotalElement = document.getElementById('metaMensalTotal');
+    producaoAcumuladaElement = document.getElementById('producaoAcumulada');
+    metaAcumuladaElement = document.getElementById('metaAcumulada');
+    saldoAcumuladoElement = document.getElementById('saldoAcumulado');
+    faltaParaMetaMensalElement = document.getElementById('faltaParaMetaMensal');
+    phdMedioMensalElement = document.getElementById('phdMedioMensal');
+    totalDiasOperacionaisPrevistosElement = document.getElementById('totalDiasOperacionaisPrevistos');
+    diasOperacaoConsideradosElement = document.getElementById('diasOperacaoConsiderados');
+    diasRestantesElement = document.getElementById('diasRestantes');
+    projecaoTextoElement = document.getElementById('projecaoTexto');
+
+    selectMes = document.getElementById('selectMes');
+    selectAno = document.getElementById('selectAno');
+    visualizarMesBtn = document.getElementById('visualizarMesBtn');
+
+    numOperadoresGlobalInput = document.getElementById('numOperadores');
+    updateConfigBtn = document.getElementById('updateConfigBtn');
+    // FIM DA SELEÇÃO DOS ELEMENTOS HTML
+
     // Carrega as configurações (incluindo NUM_OPERADORES_PADRAO) da API
     const configs = await getConfigsAPI();
     NUM_OPERADORES_PADRAO = configs.num_operadores_padrao;
-    // PACOTES_POR_OPERADOR_DIA_META também pode vir da API se você quiser que seja configurável
 
     popularSeletoresDeMesAno(); // Popula os dropdowns de mês e ano
 
@@ -461,18 +434,67 @@ document.addEventListener('DOMContentLoaded', async () => { // Marcado como asyn
     const ano = hoje.getFullYear();
     dataInput.value = `${ano}-${mes}-${dia}`;
 
-    // Inicializa o campo de operadores do dia com o valor padrão carregado
     operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO;
-    numOperadoresGlobalInput.value = NUM_OPERADORES_PADRAO; // Garante que o input de configuração também reflita o padrão
+    numOperadoresGlobalInput.value = NUM_OPERADORES_PADRAO;
 
-    // Define o mês e ano visualizados como o mês/ano atual
     anoVisualizado = ano;
-    mesVisualizado = parseInt(mes); // Garante que seja um número inteiro
+    mesVisualizado = parseInt(mes);
 
-    // Define os valores dos seletores de mês e ano para o mês/ano atual
-    // Isso garante que os dropdowns mostrem o mês e ano corretos visualmente
     selectMes.value = mesVisualizado;
     selectAno.value = anoVisualizado;
+
+    // ADIÇÃO DOS LISTENERS DE EVENTOS MOVIDA PARA AQUI
+    addProducaoBtn.addEventListener('click', async () => {
+        const data = dataInput.value;
+        const producaoDiaria = parseInt(producaoDiariaInput.value);
+        const operadoresNoDia = parseInt(operadoresNoDiaInput.value);
+        const isExcecao = isExcecaoCheckbox.checked;
+
+        if (!data || isNaN(producaoDiaria) || producaoDiaria < 0 || isNaN(operadoresNoDia) || operadoresNoDia < 0) {
+            alert('Por favor, preencha todos os campos com valores válidos.');
+            return;
+        }
+
+        const dataObj = new Date(data + 'T12:00:00');
+        const diaDaSemana = dataObj.getDay();
+        const isDomingo = diaDaSemana === 0;
+
+        const tipoDia = isExcecao ? 'Exceção' : (isDomingo ? 'Trabalhado - Domingo' : 'Normal');
+
+        const producaoData = {
+            data: data,
+            producao_diaria: producaoDiaria,
+            operadores_no_dia: operadoresNoDia,
+            tipo_dia: tipoDia
+        };
+
+        await addProducaoAPI(producaoData);
+        await carregarEExibirDados();
+        producaoDiariaInput.value = '';
+        isExcecaoCheckbox.checked = false;
+    });
+
+    visualizarMesBtn.addEventListener('click', async () => {
+        anoVisualizado = parseInt(selectAno.value);
+        mesVisualizado = parseInt(selectMes.value);
+        await carregarEExibirDados();
+    });
+
+    updateConfigBtn.addEventListener('click', async () => {
+        const novoNumOperadores = parseInt(numOperadoresGlobalInput.value);
+        if (isNaN(novoNumOperadores) || novoNumOperadores < 1) {
+            alert('Por favor, insira um número de operadores padrão válido (maior que zero).');
+            return;
+        }
+        const updatedConfig = await updateConfigsAPI(novoNumOperadores);
+        if (updatedConfig) {
+            NUM_OPERADORES_PADRAO = updatedConfig.num_operadores_padrao;
+            operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO;
+            alert('Número de Operadores Padrão atualizado com sucesso!');
+            carregarEExibirDados();
+        }
+    });
+    // FIM DA ADIÇÃO DOS LISTENERS DE EVENTOS
 
     await carregarEExibirDados(); // Carrega e exibe os dados iniciais
 });
