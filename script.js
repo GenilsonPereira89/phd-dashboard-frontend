@@ -385,7 +385,7 @@ function toggleSections(showSectionId) {
     }
 }
 
-// Event listener para gerar o relatório (mantido igual)
+// Event listener para gerar o relatório
 generateReportBtn.addEventListener('click', async () => {
     reportStatusElement.textContent = 'Gerando relatório...';
     reportTableBody.innerHTML = '';
@@ -404,8 +404,8 @@ generateReportBtn.addEventListener('click', async () => {
 
     // Iterar sobre os meses selecionados e buscar/calcular KPIs
     for (const mes of selectedMonths) {
-        const producoes = await getProducoesAPI(mes, selectedYear); // Usando getProducoesAPI
-        const kpisDoMes = await calculaKPIs(producoes); // Usando calculaKPIs
+        const producoes = await getProducoesAPI(mes, selectedYear);
+        const kpisDoMes = await calculaKPIs(producoes);
         allKPIs[`${getNomeMes(mes)}/${selectedYear}`] = kpisDoMes;
     }
 
@@ -454,7 +454,7 @@ generateReportBtn.addEventListener('click', async () => {
     reportStatusElement.textContent = 'Relatório gerado com sucesso!';
 });
 
-// Event listener para exportar para CSV (mantido igual)
+// Event listener para exportar para CSV
 exportCsvBtn.addEventListener('click', () => {
     const table = reportTable;
     let csv = [];
@@ -482,7 +482,6 @@ exportCsvBtn.addEventListener('click', () => {
     downloadLink.href = URL.createObjectURL(csvFile);
     downloadLink.download = `relatorio_phd_${reportAnoSelect.value}.csv`;
     document.body.appendChild(downloadLink);
-    downloadLink.click();
     document.body.removeChild(downloadLink);
     alert('Relatório exportado para CSV!');
 });
@@ -495,7 +494,7 @@ function popularSeletoresDeMesAno() {
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
     // Garante que selectMes e selectAno já foram definidos antes de usar
-    if (selectMes) {
+    if (selectMes) { // Adicionado verificação
         selectMes.innerHTML = meses.map((mes, index) => `<option value="${index + 1}">${mes}</option>`).join('');
     }
 
@@ -504,12 +503,12 @@ function popularSeletoresDeMesAno() {
     for (let i = anoAtual - 5; i <= anoAtual + 5; i++) {
         anos.push(i);
     }
-    if (selectAno) {
+    if (selectAno) { // Adicionado verificação
         selectAno.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
     }
 
     // Popula seletores do Relatório Analítico
-    if (reportMesesSelect) {
+    if (reportMesesSelect) { // Adicionado verificação
         reportMesesSelect.innerHTML = '';
         meses.forEach((nome, index) => {
             const option = document.createElement('option');
@@ -519,7 +518,7 @@ function popularSeletoresDeMesAno() {
         });
     }
 
-    if (reportAnoSelect) {
+    if (reportAnoSelect) { // Adicionado verificação
         reportAnoSelect.innerHTML = '';
         for (let i = anoAtual - 5; i <= anoAtual + 1; i++) {
             const option = document.createElement('option');
@@ -574,15 +573,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     reportStatusElement = document.getElementById('reportStatus');
 
     // DEBUGGING: Check if elements are found
-    if (!addProducaoBtn) console.error("addProducaoBtn not found!");
-    if (!visualizarMesBtn) console.error("visualizarMesBtn not found!");
-    if (!updateConfigBtn) console.error("updateConfigBtn not found!");
-    if (!selectMes) console.error("selectMes not found!");
-    if (!selectAno) console.error("selectAno not found!");
-    if (!reportMesesSelect) console.error("reportMesesSelect not found!");
-    if (!reportAnoSelect) console.error("reportAnoSelect not found!");
-    if (!generateReportBtn) console.error("generateReportBtn not found!");
-    if (!exportCsvBtn) console.error("exportCsvBtn not found!");
+    console.log("addProducaoBtn:", addProducaoBtn);
+    console.log("visualizarMesBtn:", visualizarMesBtn);
+    console.log("updateConfigBtn:", updateConfigBtn);
+    console.log("selectMes:", selectMes);
+    console.log("selectAno:", selectAno);
+    console.log("reportMesesSelect:", reportMesesSelect);
+    console.log("reportAnoSelect:", reportAnoSelect);
+    console.log("generateReportBtn:", generateReportBtn);
+    console.log("exportCsvBtn:", exportCsvBtn);
 
 
     // --- 2. CARREGA CONFIGURAÇÕES DA API ---
@@ -609,61 +608,93 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectAno.value = anoVisualizado;
 
     // --- 5. ADIÇÃO DOS LISTENERS DE EVENTOS ---
-    addProducaoBtn.addEventListener('click', async () => {
-        const data = dataInput.value;
-        const producaoDiaria = parseInt(producaoDiariaInput.value);
-        const operadoresNoDia = parseInt(operadoresNoDiaInput.value);
-        const isExcecao = isExcecaoCheckbox.checked;
+    // Adiciona verificação antes de adicionar o listener
+    if (addProducaoBtn) {
+        addProducaoBtn.addEventListener('click', async () => {
+            const data = dataInput.value;
+            const producaoDiaria = parseInt(producaoDiariaInput.value);
+            const operadoresNoDia = parseInt(operadoresNoDiaInput.value);
+            const isExcecao = isExcecaoCheckbox.checked;
 
-        if (!data || isNaN(producaoDiaria) || producaoDiaria < 0 || isNaN(operadoresNoDia) || operadoresNoDia < 0) {
-            alert('Por favor, preencha todos os campos com valores válidos.');
-            return;
-        }
+            if (!data || isNaN(producaoDiaria) || producaoDiaria < 0 || isNaN(operadoresNoDia) || operadoresNoDia < 0) {
+                alert('Por favor, preencha todos os campos com valores válidos.');
+                return;
+            }
 
-        const dataObj = new Date(data + 'T12:00:00');
-        const diaDaSemana = dataObj.getDay();
-        const isDomingo = diaDaSemana === 0;
+            const dataObj = new Date(data + 'T12:00:00');
+            const diaDaSemana = dataObj.getDay();
+            const isDomingo = diaDaSemana === 0;
 
-        const tipoDia = isExcecao ? 'Exceção' : (isDomingo ? 'Trabalhado - Domingo' : 'Normal');
+            const tipoDia = isExcecao ? 'Exceção' : (isDomingo ? 'Trabalhado - Domingo' : 'Normal');
 
-        const producaoData = {
-            data: data,
-            producao_diaria: producaoDiaria,
-            operadores_no_dia: operadoresNoDia,
-            tipo_dia: tipoDia
-        };
+            const producaoData = {
+                data: data,
+                producao_diaria: producaoDiaria,
+                operadores_no_dia: operadoresNoDia,
+                tipo_dia: tipoDia
+            };
 
-        await addProducaoAPI(producaoData);
-        await carregarEExibirDados();
-        producaoDiariaInput.value = '';
-        isExcecaoCheckbox.checked = false;
-    });
+            await addProducaoAPI(producaoData);
+            await carregarEExibirDados();
+            producaoDiariaInput.value = '';
+            isExcecaoCheckbox.checked = false;
+        });
+    } else {
+        console.error("Erro: addProducaoBtn é null. O listener não pode ser adicionado.");
+    }
 
-    visualizarMesBtn.addEventListener('click', async () => {
-        anoVisualizado = parseInt(selectAno.value);
-        mesVisualizado = parseInt(selectMes.value);
-        await carregarEExibirDados();
-    });
+    if (visualizarMesBtn) {
+        visualizarMesBtn.addEventListener('click', async () => {
+            anoVisualizado = parseInt(selectAno.value);
+            mesVisualizado = parseInt(selectMes.value);
+            await carregarEExibirDados();
+        });
+    } else {
+        console.error("Erro: visualizarMesBtn é null. O listener não pode ser adicionado.");
+    }
 
-    updateConfigBtn.addEventListener('click', async () => {
-        const novoNumOperadores = parseInt(numOperadoresGlobalInput.value);
-        if (isNaN(novoNumOperadores) || novoNumOperadores < 1) {
-            alert('Por favor, insira um número de operadores padrão válido (maior que zero).');
-            return;
-        }
-        const updatedConfig = await updateConfigsAPI(novoNumOperadores);
-        if (updatedConfig) {
-            NUM_OPERADORES_PADRAO = updatedConfig.num_operadores_padrao;
-            operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO;
-            alert('Número de Operadores Padrão atualizado com sucesso!');
-            carregarEExibirDados();
-        }
-    });
+    if (updateConfigBtn) {
+        updateConfigBtn.addEventListener('click', async () => {
+            const novoNumOperadores = parseInt(numOperadoresGlobalInput.value);
+            if (isNaN(novoNumOperadores) || novoNumOperadores < 1) {
+                alert('Por favor, insira um número de operadores padrão válido (maior que zero).');
+                return;
+            }
+            const updatedConfig = await updateConfigsAPI(novoNumOperadores);
+            if (updatedConfig) {
+                NUM_OPERADORES_PADRAO = updatedConfig.num_operadores_padrao;
+                operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO;
+                alert('Número de Operadores Padrão atualizado com sucesso!');
+                carregarEExibirDados();
+            }
+        });
+    } else {
+        console.error("Erro: updateConfigBtn é null. O listener não pode ser adicionado.");
+    }
 
-    showDashboardBtn.addEventListener('click', () => toggleSections('dashboard'));
-    showReportBtn.addEventListener('click', () => toggleSections('report'));
-    generateReportBtn.addEventListener('click', async () => { /* ... */ }); // Conteúdo já está na função
-    exportCsvBtn.addEventListener('click', () => { /* ... */ }); // Conteúdo já está na função
+    if (showDashboardBtn) {
+        showDashboardBtn.addEventListener('click', () => toggleSections('dashboard'));
+    } else {
+        console.error("Erro: showDashboardBtn é null. O listener não pode ser adicionado.");
+    }
+    
+    if (showReportBtn) {
+        showReportBtn.addEventListener('click', () => toggleSections('report'));
+    } else {
+        console.error("Erro: showReportBtn é null. O listener não pode ser adicionado.");
+    }
+
+    if (generateReportBtn) {
+        generateReportBtn.addEventListener('click', async () => { /* ... */ }); // Conteúdo já está na função
+    } else {
+        console.error("Erro: generateReportBtn é null. O listener não pode ser adicionado.");
+    }
+
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', () => { /* ... */ }); // Conteúdo já está na função
+    } else {
+        console.error("Erro: exportCsvBtn é null. O listener não pode ser adicionado.");
+    }
 
 
     // --- 6. CARREGA E EXIBE DADOS INICIAIS ---
