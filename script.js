@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalOperadoresRegistrados += prod.operadores_no_dia;
                 // Calcula o PHD diário para cada registro
                 const metaDiaria = prod.operadores_no_dia * pacotesPorOperadorDiaMeta;
-                const phdDiario = prod.operacao > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
+                const phdDiario = prod.operadores_no_dia > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
                 totalPHD += phdDiario;
             }
         });
@@ -202,9 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         metaMensalElement.textContent = metaMensal.toLocaleString('pt-BR');
         producaoAcumuladaElement.textContent = producaoAcumulada.toLocaleString('pt-BR');
-        saldoAcumuladoElement.textContent = saldoAcumulado.toLocaleString('pt-BR');
         
-        // Aplica classe para cor do saldo
+        saldoAcumuladoElement.textContent = saldoAcumulado.toLocaleString('pt-BR');
+        // Aplica classe para cor do saldo acumulado
         saldoAcumuladoElement.classList.remove('positivo', 'negativo');
         if (saldoAcumulado > 0) {
             saldoAcumuladoElement.classList.add('positivo');
@@ -283,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const saldoCell = row.insertCell(5);
             saldoCell.textContent = saldoDiario.toLocaleString('pt-BR');
+            // Aplica classe para cor do saldo diário
             if (saldoDiario > 0) {
                 saldoCell.classList.add('positivo');
             } else if (saldoDiario < 0) {
@@ -406,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleRelatorioBtn.textContent = 'Voltar ao Dashboard';
             // Chama a função para popular e exibir o relatório
             populateMonthAndYearSelects(); // Garante que os selects de comparação estejam atualizados
-            renderComparativoMensal([], null, null); // Limpa a tabela ao entrar na seção
+            renderComparativoMensal(null, null, null, null); // Limpa a tabela ao entrar na seção
         }
     });
 
