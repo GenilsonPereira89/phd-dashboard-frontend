@@ -89,6 +89,30 @@ async function salvarProducaoAPI(registro) {
     }
 }
 
+async function atualizarProducaoAPI(data, registro) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/producoes/${data}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                producao: registro.producao,
+                is_excecao: Number(registro.isExcecao),
+                operadores_no_dia: registro.operadoresNoDia
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`Erro ao atualizar produção: ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao atualizar produção na API:', error);
+        alert('Erro ao atualizar produção. Verifique o servidor backend.');
+        return null;
+    }
+}
+
 async function excluirProducaoAPI(data) {
     try {
         const response = await fetch(`${API_BASE_URL}/producoes/${data}`, {
@@ -202,6 +226,24 @@ isExcecaoCheckbox.addEventListener('change', () => {
     }
 });
 
+// Função para carregar os dados de um registro para edição no formulário
+function editarProducao(registro) {
+    dataInput.value = registro.data;
+    producaoDiariaInput.value = registro.producao;
+    isExcecaoCheckbox.checked = registro.isExcecao;
+    operadoresNoDiaInput.value = registro.operadoresNoDia;
+
+    // Atualiza o estado de disabled dos inputs com base na exceção
+    producaoDiariaInput.disabled = registro.isExcecao;
+    operadoresNoDiaInput.disabled = registro.isExcecao;
+
+    // Altera o texto do botão para indicar "Atualizar"
+    addProducaoBtn.textContent = 'Atualizar Produção';
+    // Adiciona um atributo para saber que estamos em modo de edição
+    addProducaoBtn.dataset.editing = 'true';
+}
+
+
 // Event listener para o botão de adicionar produção diária
 addProducaoBtn.addEventListener('click', async () => { // Marcado como async
     const data = dataInput.value;
@@ -216,7 +258,7 @@ addProducaoBtn.addEventListener('click', async () => { // Marcado como async
     if (!isExcecao && (isNaN(operadoresNoDia) || operadoresNoDia < 1)) {
         alert('Por favor, insira um número válido de operadores para o dia (pelo menos 1), ou marque como exceção.');
         return;
-    }
+        }
 
     // Se for exceção, o número de operadores no dia é irrelevante, podemos definir como 0.
     if (isExcecao) {
@@ -243,10 +285,21 @@ addProducaoBtn.addEventListener('click', async () => { // Marcado como async
         operadoresNoDia: operadoresNoDia // Salva os operadores para este dia
     };
 
-    const response = await salvarProducaoAPI(novoRegistro); // Chama a API para salvar
+    let response = null;
+    if (addProducaoBtn.dataset.editing === 'true') {
+        // Se estiver em modo de edição, chama a função de atualização
+        response = await atualizarProducaoAPI(data, novoRegistro);
+        addProducaoBtn.textContent = 'Adicionar/Atualizar Produção'; // Volta o texto original
+        delete addProducaoBtn.dataset.editing; // Remove o atributo de edição
+    } else {
+        // Caso contrário, adiciona um novo registro
+        response = await salvarProducaoAPI(novoRegistro);
+    }
+    
     if (response) {
-        // Se a API salvou com sucesso, atualiza o dashboard
+        // Se a API salvou/atualizou com sucesso, atualiza o dashboard
         await atualizarDashboard(anoVisualizado, mesVisualizado); // Aguarda a atualização dos dados
+        // Limpa o formulário após a operação
         dataInput.value = '';
         producaoDiariaInput.value = '';
         isExcecaoCheckbox.checked = false;
@@ -422,6 +475,15 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
         }
 
         const acoesCell = row.insertCell();
+        
+        // Botão Editar
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Editar';
+        editBtn.classList.add('edit-btn'); // Adiciona uma classe para estilização
+        editBtn.onclick = () => editarProducao(registro); // Chama a nova função de edição
+        acoesCell.appendChild(editBtn);
+
+        // Botão Excluir
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Excluir';
         deleteBtn.classList.add('delete-btn');
