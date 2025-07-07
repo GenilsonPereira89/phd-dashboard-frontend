@@ -34,6 +34,21 @@ let visualizarMesBtn;
 let numOperadoresGlobalInput;
 let updateConfigBtn;
 
+// Elementos do Relatório Analítico
+let dashboardSection;
+let reportSection;
+let showDashboardBtn;
+let showReportBtn;
+let reportMesesSelect;
+let reportAnoSelect;
+let generateReportBtn;
+let exportCsvBtn;
+let reportTable;
+let reportTableHeader;
+let reportTableBody;
+let reportStatusElement;
+
+
 let anoVisualizado;
 let mesVisualizado;
 
@@ -43,7 +58,7 @@ async function getConfigsAPI() {
         const response = await fetch(`${API_BASE_URL}/configs`);
         if (!response.ok) {
             if (response.status === 404) {
-                console.warn('Configurações não encontradas, criando padrão...');
+                console.warn('Configurações não encontradas, tentando criar padrão...');
                 const createResponse = await fetch(`${API_BASE_URL}/configs`, {
                     method: 'POST',
                     headers: {
@@ -350,24 +365,174 @@ async function carregarEExibirDados() {
     exibeHistorico(historico);
 }
 
+// --- Funções e Event Listeners para o Relatório Analítico ---
+
+// Função para alternar visibilidade das seções
+function toggleSections(showSectionId) {
+    dashboardSection.classList.remove('active');
+    reportSection.classList.remove('active');
+    showDashboardBtn.classList.remove('active');
+    showReportBtn.classList.remove('active');
+
+    if (showSectionId === 'dashboard') {
+        dashboardSection.classList.add('active');
+        showDashboardBtn.classList.add('active');
+        carregarEExibirDados(); // Recarrega o dashboard
+    } else if (showSectionId === 'report') {
+        reportSection.classList.add('active');
+        showReportBtn.classList.add('active');
+        // Não atualiza automaticamente o relatório, espera o usuário gerar
+    }
+}
+
+// Event listener para gerar o relatório (mantido igual)
+generateReportBtn.addEventListener('click', async () => {
+    reportStatusElement.textContent = 'Gerando relatório...';
+    reportTableBody.innerHTML = '';
+    reportTableHeader.innerHTML = '<th>KPI</th>'; // Reseta o cabeçalho
+
+    const selectedMonths = Array.from(reportMesesSelect.selectedOptions).map(option => parseInt(option.value));
+    const selectedYear = parseInt(reportAnoSelect.value);
+
+    if (selectedMonths.length === 0 || isNaN(selectedYear)) {
+        alert('Por favor, selecione pelo menos um mês e um ano para gerar o relatório.');
+        reportStatusElement.textContent = '';
+        return;
+    }
+
+    const allKPIs = {}; // Objeto para armazenar KPIs por mês/ano
+
+    // Iterar sobre os meses selecionados e buscar/calcular KPIs
+    for (const mes of selectedMonths) {
+        const producoes = await getProducoesAPI(mes, selectedYear); // Usando getProducoesAPI
+        const kpisDoMes = await calculaKPIs(producoes); // Usando calculaKPIs
+        allKPIs[`${getNomeMes(mes)}/${selectedYear}`] = kpisDoMes;
+    }
+
+    // Nomes dos KPIs para exibir na primeira coluna
+    const kpiNames = {
+        metaMensalTotal: 'Meta Mensal Total (Pacotes)',
+        producaoAcumulada: 'Produção Acumulada (Pacotes)',
+        metaEsperadaAteHoje: 'Meta Esperada até Hoje (Pacotes)',
+        saldoAcumulado: 'Saldo Acumulado (Pacotes)',
+        faltaParaMetaMensal: 'Falta para Meta (Pacotes)',
+        phdMedioMensal: 'PHD Médio Mensal (Pacotes/Operador)',
+        totalDiasOperacionaisPrevistos: 'Total Dias Operacionais Previstos',
+        diasOperacaoConsiderados: 'Dias de Operação Considerados',
+        diasRestantes: 'Dias Restantes no Mês'
+    };
+
+    // Adicionar cabeçalhos de coluna para os meses selecionados
+    for (const mesLabel in allKPIs) {
+        const th = document.createElement('th');
+        th.textContent = mesLabel;
+        reportTableHeader.appendChild(th);
+    }
+
+    // Preencher as linhas da tabela com os valores dos KPIs
+    for (const kpiKey in kpiNames) {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th'); // Primeira coluna é o nome do KPI
+        th.textContent = kpiNames[kpiKey];
+        tr.appendChild(th);
+
+        for (const mesLabel in allKPIs) {
+            const td = document.createElement('td');
+            let value = allKPIs[mesLabel][kpiKey];
+
+            if (kpiKey === 'phdMedioMensal') {
+                 td.textContent = value.toFixed(2).toLocaleString('pt-BR');
+            } else {
+                 td.textContent = value.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+            }
+            td.classList.add('align-right');
+            tr.appendChild(td);
+        }
+        reportTableBody.appendChild(tr);
+    }
+
+    reportStatusElement.textContent = 'Relatório gerado com sucesso!';
+});
+
+// Event listener para exportar para CSV (mantido igual)
+exportCsvBtn.addEventListener('click', () => {
+    const table = reportTable;
+    let csv = [];
+    
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText);
+    csv.push(headers.join(';'));
+
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const rowData = [];
+        rowData.push(row.querySelector('th').innerText); 
+        Array.from(row.querySelectorAll('td')).forEach(cell => {
+            let formattedValue = cell.innerText;
+            if (formattedValue.includes(',')) {
+                formattedValue = formattedValue.replace(/\./g, '').replace(',', '.');
+            } else {
+                formattedValue = formattedValue.replace(/\./g, '');
+            }
+            rowData.push(formattedValue);
+        });
+        csv.push(rowData.join(';'));
+    });
+
+    const csvFile = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(csvFile);
+    downloadLink.download = `relatorio_phd_${reportAnoSelect.value}.csv`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    alert('Relatório exportado para CSV!');
+});
+
+
 // --- Inicialização da página ---
 function popularSeletoresDeMesAno() {
     const meses = [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
-    selectMes.innerHTML = meses.map((mes, index) => `<option value="${index + 1}">${mes}</option>`).join('');
+    // Garante que selectMes e selectAno já foram definidos antes de usar
+    if (selectMes) {
+        selectMes.innerHTML = meses.map((mes, index) => `<option value="${index + 1}">${mes}</option>`).join('');
+    }
 
     const anoAtual = new Date().getFullYear();
     const anos = [];
     for (let i = anoAtual - 5; i <= anoAtual + 5; i++) {
         anos.push(i);
     }
-    selectAno.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+    if (selectAno) {
+        selectAno.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+    }
+
+    // Popula seletores do Relatório Analítico
+    if (reportMesesSelect) {
+        reportMesesSelect.innerHTML = '';
+        meses.forEach((nome, index) => {
+            const option = document.createElement('option');
+            option.value = index + 1;
+            option.textContent = nome;
+            reportMesesSelect.appendChild(option);
+        });
+    }
+
+    if (reportAnoSelect) {
+        reportAnoSelect.innerHTML = '';
+        for (let i = anoAtual - 5; i <= anoAtual + 1; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            reportAnoSelect.appendChild(option);
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     // --- 1. SELEÇÃO DE TODOS OS ELEMENTOS HTML ---
+    // Dashboard elements
     dataInput = document.getElementById('data');
     producaoDiariaInput = document.getElementById('producaoDiaria');
     isExcecaoCheckbox = document.getElementById('isExcecao');
@@ -393,6 +558,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     numOperadoresGlobalInput = document.getElementById('numOperadores');
     updateConfigBtn = document.getElementById('updateConfigBtn');
+
+    // Report elements
+    dashboardSection = document.getElementById('dashboardSection');
+    reportSection = document.getElementById('reportSection');
+    showDashboardBtn = document.getElementById('showDashboardBtn');
+    showReportBtn = document.getElementById('showReportBtn');
+    reportMesesSelect = document.getElementById('reportMeses');
+    reportAnoSelect = document.getElementById('reportAno');
+    generateReportBtn = document.getElementById('generateReportBtn');
+    exportCsvBtn = document.getElementById('exportCsvBtn');
+    reportTable = document.getElementById('reportTable');
+    reportTableHeader = document.getElementById('reportTableHeader');
+    reportTableBody = document.getElementById('reportTableBody');
+    reportStatusElement = document.getElementById('reportStatus');
+
+    // DEBUGGING: Check if elements are found
+    if (!addProducaoBtn) console.error("addProducaoBtn not found!");
+    if (!visualizarMesBtn) console.error("visualizarMesBtn not found!");
+    if (!updateConfigBtn) console.error("updateConfigBtn not found!");
+    if (!selectMes) console.error("selectMes not found!");
+    if (!selectAno) console.error("selectAno not found!");
+    if (!reportMesesSelect) console.error("reportMesesSelect not found!");
+    if (!reportAnoSelect) console.error("reportAnoSelect not found!");
+    if (!generateReportBtn) console.error("generateReportBtn not found!");
+    if (!exportCsvBtn) console.error("exportCsvBtn not found!");
+
 
     // --- 2. CARREGA CONFIGURAÇÕES DA API ---
     const configs = await getConfigsAPI();
@@ -468,6 +659,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             carregarEExibirDados();
         }
     });
+
+    showDashboardBtn.addEventListener('click', () => toggleSections('dashboard'));
+    showReportBtn.addEventListener('click', () => toggleSections('report'));
+    generateReportBtn.addEventListener('click', async () => { /* ... */ }); // Conteúdo já está na função
+    exportCsvBtn.addEventListener('click', () => { /* ... */ }); // Conteúdo já está na função
+
 
     // --- 6. CARREGA E EXIBE DADOS INICIAIS ---
     await carregarEExibirDados();
