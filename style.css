@@ -46,7 +46,7 @@ h1, h2 {
     background-color: #fdfdfd;
 }
 
-/* Estilo para os grupos de input - REVERTIDO PARA SEU CÓDIGO ORIGINAL (não flex por padrão) */
+/* Estilo para os grupos de input */
 .input-group {
     margin-bottom: 15px; /* Espaço entre os grupos de input */
 }
@@ -86,7 +86,7 @@ h1, h2 {
 }
 
 
-/* Estilo para botões de adicionar produção - CONTINUA ABAIXO (como solicitado) */
+/* Estilo para botões de adicionar produção */
 .form-section button { /* Ajsutado para form-section */
     background-color: #007bff;
     color: white;
@@ -95,7 +95,7 @@ h1, h2 {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    width: 100%; /* Esta linha faz com que o botão ocupe a largura total e fique abaixo */
+    width: 100%;
     transition: background-color 0.3s ease;
 }
 
@@ -108,21 +108,11 @@ h1, h2 {
     text-align: center;
 }
 
-/* CORREÇÃO AQUI: Para o botão "Atualizar Padrão" ficar ao lado do input */
-.config-section .input-group {
-    display: flex; /* Faz com que os itens dentro deste input-group fiquem lado a lado */
-    align-items: center; /* Alinha verticalmente */
-    justify-content: center; /* Centraliza horizontalmente */
-    flex-wrap: wrap; /* Permite quebrar linha em telas menores */
-    gap: 15px; /* Espaço entre o input e o botão */
-}
-
 .config-section input[type="number"] {
-    /* flex: 1 1 auto; Removido para manter max-width e width */
+    width: calc(100% - 22px);
     max-width: 200px; /* Limita a largura para não ficar muito grande */
-    width: auto; /* Permite que o width seja ajustado pelo flex ou pelo max-width */
     padding: 10px;
-    margin-bottom: 0; /* Removido para que o gap do flex gerencie o espaçamento */
+    margin-bottom: 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
     text-align: center;
@@ -138,7 +128,6 @@ h1, h2 {
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.3s ease;
-    margin-bottom: 0; /* Removido para que o gap do flex gerencie o espaçamento */
 }
 
 .config-section button:hover {
@@ -182,7 +171,7 @@ h1, h2 {
     background-color: #5a6268;
 }
 
-/* Cards de KPI no dashboard - SEU CÓDIGO ORIGINAL AQUI */
+/* Cards de KPI no dashboard */
 .kpis {
     display: flex;
     flex-wrap: wrap;
@@ -308,107 +297,6 @@ table tbody tr:hover {
     text-align: center;
 }
 
-/* --- ESTILOS DO MODAL (ADICIONADOS AO SEU CÓDIGO) --- */
-.modal {
-    display: none; /* ESSA É A LINHA CRÍTICA: Garante que o modal esteja escondido por padrão */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    display: flex; /* Use flexbox para centralizar, mas é iniciado como 'none' */
-    align-items: center; /* Center vertically */
-    justify-content: center; /* Center horizontally */
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: auto; /* Removed fixed margin, flexbox handles centering */
-    padding: 25px;
-    border: 1px solid #888;
-    border-radius: 8px;
-    width: 90%; /* Responsive width */
-    max-width: 500px; /* Max width for larger screens */
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-    position: relative; /* Needed for close button positioning */
-}
-
-.modal-content h2 {
-    text-align: center;
-    color: #007bff;
-    margin-top: 0;
-    margin-bottom: 20px;
-}
-
-.modal-content .input-group {
-    margin-bottom: 15px;
-}
-
-.modal-content label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.modal-content input[type="number"] {
-    width: calc(100% - 22px); /* Adjust for padding/border */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-}
-
-.modal-content button {
-    display: block; /* Make buttons stack */
-    width: 100%;
-    padding: 10px;
-    margin-top: 15px; /* Space between buttons */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-}
-
-#saveEditBtn {
-    background-color: #007bff;
-    color: white;
-}
-
-#saveEditBtn:hover {
-    background-color: #0056b3;
-}
-
-#cancelEditBtn {
-    background-color: #6c757d; /* Grey for cancel */
-    color: white;
-}
-
-#cancelEditBtn:hover {
-    background-color: #5a6268;
-}
-
-.close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    position: absolute; /* Position relative to modal-content */
-    top: 10px;
-    right: 15px;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-
 /* Media Queries para responsividade */
 @media (max-width: 768px) {
     .container {
@@ -424,28 +312,14 @@ table tbody tr:hover {
     .form-section input[type="date"],
     .form-section input[type="number"],
     .form-section button,
-    /* .config-section input[type="number"], REMOVIDO PARA SER TRATADO PELO FLEX NO MOBILE TAMBÉM*/
-    /* .config-section button, REMOVIDO PARA SER TRATADO PELO FLEX NO MOBILE TAMBÉM*/
+    .config-section input[type="number"],
+    .config-section button,
     .select-month-year select,
     .select-month-year button {
         width: 100%;
         max-width: none; /* Remove max-width para inputs numéricos */
         box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
     }
-
-    /* TRATAMENTO MOBILE ESPECÍFICO PARA A SEÇÃO DE CONFIGURAÇÕES */
-    .config-section .input-group {
-        flex-direction: column; /* Em telas pequenas, empilha o input e o botão */
-        align-items: center;
-    }
-    .config-section input[type="number"] {
-        width: 100%; /* Ocupa a largura total */
-        margin-bottom: 15px; /* Adiciona margem inferior quando empilhado */
-    }
-    .config-section button {
-        width: 100%; /* Ocupa a largura total */
-    }
-
 
     /* Empilha os elementos da seção de seleção de mês em telas menores */
     .select-month-year label,
@@ -498,8 +372,8 @@ table tbody tr:hover {
     /* Mapeamento dos cabeçalhos para os dados */
     table td:nth-of-type(1):before { content: "Data"; }
     table td:nth-of-type(2):before { content: "Produção (Pacotes)"; }
-    table td:nth-of-type(3):before { content: "Operadores"; }
-    table td:nth-of-type(4):before { content: "Meta Diária"; }
+    table td:nth-of-type(3):before { content: "Operadores"; } /* Nova coluna */
+    table td:nth-of-type(4):before { content: "Meta Diária"; } /* Nova coluna */
     table td:nth-of-type(5):before { content: "PHD Diário"; }
     table td:nth-of-type(6):before { content: "Saldo Diário"; }
     table td:nth-of-type(7):before { content: "Tipo de Dia"; }
