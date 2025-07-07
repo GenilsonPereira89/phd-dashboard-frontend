@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const backendUrl = 'https://phd-dashboard-backend-python.onrender.com/api';
 
     // Elementos do Dashboard Principal
-    const mainContentWrapper = document.getElementById('main-content-wrapper'); // NOVA DIV ENVOLVENDO TUDO
+    const mainContentWrapper = document.getElementById('main-content-wrapper');
     const toggleRelatorioBtn = document.getElementById('toggleRelatorioBtn');
 
     // Elementos da Seção de Relatórios
@@ -159,38 +159,45 @@ document.addEventListener('DOMContentLoaded', () => {
         let diasUteisTrabalhados = 0;
         let totalOperadoresRegistrados = 0;
         let totalPHD = 0;
+        let saldoAcumuladoTotal = 0; // Vai acumular os saldos diários
 
         const diasComProducao = new Set();
 
         producoes.forEach(prod => {
             producaoAcumulada += prod.producao;
             diasComProducao.add(prod.data); // Para contar dias com registro
+            
+            const metaDiaria = prod.operadores_no_dia * pacotesPorOperadorDiaMeta;
+            const saldoDiario = prod.producao - metaDiaria;
+
             if (!prod.is_excecao) {
                 diasUteisTrabalhados++;
                 totalOperadoresRegistrados += prod.operadores_no_dia;
-                // Calcula o PHD diário para cada registro
-                const metaDiaria = prod.operadores_no_dia * pacotesPorOperadorDiaMeta;
                 const phdDiario = prod.operadores_no_dia > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
                 totalPHD += phdDiario;
+                saldoAcumuladoTotal += saldoDiario; // Acumula o saldo diário apenas para dias não exceção
+            } else {
+                // Se for um dia de exceção, não conta para a meta diária, então o saldo é a própria produção
+                // mas não contribui para o saldo acumulado de dias úteis regulares
+                // Se a intenção é que dias de exceção também contribuam, a lógica aqui precisaria ser ajustada.
+                // Mantendo como estava, dias de exceção não influenciam o saldo acumulado que se baseia na meta de 450.
             }
         });
 
-        // Calcula a meta mensal
+        // Calcula a meta mensal (esta parte permanece a mesma, pois é a meta geral do mês)
         let metaMensal = 0;
         for (let i = 1; i <= totalDiasNoMes; i++) {
             const dataAtual = `${ano}-${mes.padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
-            // Se o dia não está nos registros ou não é um dia de exceção nos registros
             const producaoDoDia = producoes.find(p => p.data === dataAtual);
 
             if (producaoDoDia && producaoDoDia.is_excecao) {
-                // Dia de exceção registrado, não conta para meta
                 continue;
             }
 
-            if (!isWeekend(dataAtual)) { // Se não é fim de semana
-                if (producaoDoDia) { // Se tem produção registrada e não é exceção
+            if (!isWeekend(dataAtual)) {
+                if (producaoDoDia) {
                     metaMensal += producaoDoDia.operadores_no_dia * pacotesPorOperadorDiaMeta;
-                } else { // Se não tem produção registrada, usa o padrão
+                } else {
                     metaMensal += numOperadoresPadrao * pacotesPorOperadorDiaMeta;
                 }
             }
@@ -198,17 +205,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const phdMedio = diasUteisTrabalhados > 0 ? (totalPHD / diasUteisTrabalhados) : 0;
         const mediaOperadoresDia = diasUteisTrabalhados > 0 ? (totalOperadoresRegistrados / diasUteisTrabalhados) : 0;
-        const saldoAcumulado = producaoAcumulada - metaMensal;
-
+        
         metaMensalElement.textContent = metaMensal.toLocaleString('pt-BR');
         producaoAcumuladaElement.textContent = producaoAcumulada.toLocaleString('pt-BR');
         
-        saldoAcumuladoElement.textContent = saldoAcumulado.toLocaleString('pt-BR');
+        saldoAcumuladoElement.textContent = saldoAcumuladoTotal.toLocaleString('pt-BR'); // Usa o saldo acumulado dos saldos diários
         // Aplica classe para cor do saldo acumulado
         saldoAcumuladoElement.classList.remove('positivo', 'negativo');
-        if (saldoAcumulado > 0) {
+        if (saldoAcumuladoTotal > 0) {
             saldoAcumuladoElement.classList.add('positivo');
-        } else if (saldoAcumulado < 0) {
+        } else if (saldoAcumuladoTotal < 0) {
             saldoAcumuladoElement.classList.add('negativo');
         }
 
@@ -216,6 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
         diasUteisTrabalhadosElement.textContent = diasUteisTrabalhados;
         mediaOperadoresDiaElement.textContent = mediaOperadoresDia.toFixed(1);
 
+        // A projeção ainda deve se basear na meta mensal total e produção acumulada para saber o que falta
+        // ou precisaria ser redefinida para projetar o saldo diário necessário nos dias futuros
+        // Por enquanto, mantenho a projeção como a diferença para a meta mensal total.
         updateProjecao(producaoAcumulada, metaMensal, ano, mes, diasUteisTrabalhados, producoes);
     }
 
@@ -226,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalDiasNoMes = getDaysInMonth(anoAtualNum, mesAtualNum);
 
         let diasRestantesMes = 0;
-        let metaRestante = metaMensal - producaoAcumulada;
+        let metaRestante = metaMensal - producaoAcumulada; // A projeção é sobre a meta total vs produção total
 
         // Calcula os dias úteis restantes no mês, considerando exceções e fins de semana
         // Só faz a projeção se for o mês/ano atual
@@ -427,14 +436,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let diasUteisTrabalhados = 0;
         let totalOperadoresRegistrados = 0;
         let totalPHD = 0;
+        let saldoAcumuladoKPI = 0; // Saldo acumulado para o relatório
 
         producoes.forEach(prod => {
             producaoAcumulada += prod.producao;
+            const metaDiaria = prod.operadores_no_dia * pacotesPorOperadorDiaMeta;
+            const saldoDiario = prod.producao - metaDiaria;
+
             if (!prod.is_excecao) {
                 diasUteisTrabalhados++;
                 totalOperadoresRegistrados += prod.operadores_no_dia;
-                const phdDiario = prod.operadores_no_dia > 0 ? (prod.producao / prod.operadores_no_dia) : 0; // Evita divisão por zero
+                const phdDiario = prod.operadores_no_dia > 0 ? (prod.producao / prod.operadores_no_dia) : 0;
                 totalPHD += phdDiario;
+                saldoAcumuladoKPI += saldoDiario; // Acumula o saldo diário
             }
         });
 
@@ -458,12 +472,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const phdMedio = diasUteisTrabalhados > 0 ? (totalPHD / diasUteisTrabalhados) : 0;
         const mediaOperadoresDia = diasUteisTrabalhados > 0 ? (totalOperadoresRegistrados / diasUteisTrabalhados) : 0;
-        const saldoAcumulado = producaoAcumulada - metaMensal;
-
+        
         return {
             metaMensal: metaMensal,
             producaoAcumulada: producaoAcumulada,
-            saldoAcumulado: saldoAcumulado,
+            saldoAcumulado: saldoAcumuladoKPI, // Usa o saldo acumulado dos saldos diários
             phdMedio: phdMedio,
             diasUteisTrabalhados: diasUteisTrabalhados,
             mediaOperadoresDia: mediaOperadoresDia
