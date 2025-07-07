@@ -479,15 +479,27 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
     diasRestantesElement.textContent = kpis.diasRestantes;
     faltaParaMetaMensalElement.textContent = kpis.faltaParaMetaMensal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
 
-    // Lógica de projeção
+    // Lógica de projeção aprimorada
     if (kpis.producaoAcumulada > 0 || kpis.diasOperacaoConsiderados > 0) {
         if (kpis.diasRestantes > 0) {
-            // Projeção baseada na produção acumulada e na meta dos dias restantes com operadores padrão
             const projecaoTotal = kpis.producaoAcumulada + (kpis.diasRestantes * NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META);
-            const status = projecaoTotal >= kpis.metaMensalTotal ? 'ACIMA' : 'ABAIXO';
             const diferenca = Math.abs(projecaoTotal - kpis.metaMensalTotal);
             
-            projecaoTextoElement.innerHTML = `Com base na sua produção atual (${kpis.phdMedioMensal.toLocaleString('pt-BR')} pacotes/operador em média), a projeção para o mês é de <strong>${projecaoTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong>, ficando <strong>${status} ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
+            let projecaoMensagem = `Com base na sua produção atual (${kpis.phdMedioMensal.toLocaleString('pt-BR')} pacotes/operador em média), a projeção para o mês é de <strong>${projecaoTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong>, ficando `;
+
+            if (projecaoTotal >= kpis.metaMensalTotal) {
+                projecaoMensagem += `<strong>ACIMA ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
+            } else {
+                projecaoMensagem += `<strong>ABAIXO ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
+                
+                // Adiciona a sugestão de meta diária para bater a meta
+                const pacotesParaBaterMeta = kpis.metaMensalTotal - projecaoTotal;
+                if (kpis.diasRestantes > 0 && NUM_OPERADORES_PADRAO > 0) {
+                    const phdNecessario = pacotesParaBaterMeta / (kpis.diasRestantes * NUM_OPERADORES_PADRAO);
+                    projecaoMensagem += ` Para atingir a meta, você precisaria produzir aproximadamente <strong>${pacotesParaBaterMeta.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes adicionais</strong>, com um PHD médio de <strong>${phdNecessario.toFixed(2).toLocaleString('pt-BR')} pacotes/operador</strong> nos ${kpis.diasRestantes} dias restantes.`;
+                }
+            }
+            projecaoTextoElement.innerHTML = projecaoMensagem;
             
         } else {
             // Mês finalizado
@@ -607,6 +619,7 @@ generateReportBtn.addEventListener('click', async () => {
             } else {
                  td.textContent = value.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais para outros KPIs
             }
+            td.classList.add('align-right'); // Alinha os valores numéricos à direita
             tr.appendChild(td);
         }
         reportTableBody.appendChild(tr);
