@@ -360,7 +360,7 @@ addProducaoBtn.addEventListener('click', async () => { // Marcado como async
         producaoDiariaInput.value = '';
         isExcecaoCheckbox.checked = false;
         producaoDiariaInput.disabled = false;
-        operadoresNoDiaInput.disabled = false; // Reabilita o campo de operadores
+        operadoresNoDiaInput.disabled = false;
         operadoresNoDiaInput.value = NUM_OPERADORES_PADRAO; // Volta para o padrão
     }
 });
@@ -462,11 +462,11 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
     const kpis = calculateKPIsForMonth(producoesMes, anoVisualizado, mesVisualizado, NUM_OPERADORES_PADRAO, PACOTES_POR_OPERADOR_DIA_META);
 
     mesAtualElement.textContent = `${getNomeMes(mesVisualizado)} de ${anoVisualizado}`;
-    metaMensalTotalElement.textContent = kpis.metaMensalTotal.toLocaleString('pt-BR');
-    producaoAcumuladaElement.textContent = kpis.producaoAcumulada.toLocaleString('pt-BR');
-    metaAcumuladaElement.textContent = kpis.metaAcumulada.toLocaleString('pt-BR');
+    metaMensalTotalElement.textContent = kpis.metaMensalTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+    producaoAcumuladaElement.textContent = kpis.producaoAcumulada.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
+    metaAcumuladaElement.textContent = kpis.metaAcumulada.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
 
-    saldoAcumuladoElement.textContent = kpis.saldoAcumulado.toLocaleString('pt-BR');
+    saldoAcumuladoElement.textContent = kpis.saldoAcumulado.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
     if (kpis.saldoAcumulado >= 0) {
         saldoAcumuladoElement.classList.remove('negativo');
         saldoAcumuladoElement.classList.add('positivo');
@@ -475,10 +475,10 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
         saldoAcumuladoElement.classList.add('negativo');
     }
 
-    phdMedioMensalElement.textContent = kpis.phdMedioMensal.toLocaleString('pt-BR');
+    phdMedioMensalElement.textContent = kpis.phdMedioMensal.toLocaleString('pt-BR'); // Mantém decimais para PHD
     diasOperacaoConsideradosElement.textContent = kpis.diasOperacaoConsiderados;
     diasRestantesElement.textContent = kpis.diasRestantes;
-    faltaParaMetaMensalElement.textContent = kpis.faltaParaMetaMensal.toLocaleString('pt-BR');
+    faltaParaMetaMensalElement.textContent = kpis.faltaParaMetaMensal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
 
     // Lógica de projeção
     const diasCorridos = new Date().getDate();
@@ -495,7 +495,7 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
             // Mês finalizado
             const status = kpis.producaoAcumulada >= kpis.metaMensalTotal ? 'ACIMA' : 'ABAIXO';
             const diferenca = Math.abs(kpis.producaoAcumulada - kpis.metaMensalTotal);
-            projecaoTextoElement.innerHTML = `O mês de ${nomeMes} de ${anoVisualizado} foi finalizado com <strong>${kpis.producaoAcumulada.toLocaleString('pt-BR')} pacotes</strong>, ficando <strong>${status} ${diferenca.toLocaleString('pt-BR')} pacotes</strong> da meta mensal.`;
+            projecaoTextoElement.innerHTML = `O mês de ${getNomeMes(mesVisualizado)} de ${anoVisualizado} foi finalizado com <strong>${kpis.producaoAcumulada.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong>, ficando <strong>${status} ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
         }
     } else {
         projecaoTextoElement.textContent = 'Comece a lançar sua produção para ver a projeção!';
@@ -510,11 +510,11 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
         const saldoDiarioRegistro = registro.producao - metaDiariaRegistro;
 
         row.insertCell(0).textContent = formatarData(registro.data);
-        row.insertCell(1).textContent = registro.producao.toLocaleString('pt-BR');
+        row.insertCell(1).textContent = registro.producao.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
         row.insertCell(2).textContent = registro.operadoresNoDia;
-        row.insertCell(3).textContent = metaDiariaRegistro.toLocaleString('pt-BR');
+        row.insertCell(3).textContent = metaDiariaRegistro.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
         row.insertCell(4).textContent = phdDiarioRegistro.toFixed(2).toLocaleString('pt-BR');
-        row.insertCell(5).textContent = saldoDiarioRegistro.toLocaleString('pt-BR');
+        row.insertCell(5).textContent = saldoDiarioRegistro.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais
         row.insertCell(6).textContent = tipoDia;
 
         const acoesCell = row.insertCell(7);
@@ -604,10 +604,10 @@ generateReportBtn.addEventListener('click', async () => {
             let value = allKPIs[mesLabel][kpiKey];
 
             // Formatação específica para Saldo e PHD Médio
-            if (kpiKey === 'saldoAcumulado' || kpiKey === 'phdMedioMensal') {
+            if (kpiKey === 'phdMedioMensal') {
                  td.textContent = value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             } else {
-                 td.textContent = value.toLocaleString('pt-BR');
+                 td.textContent = value.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Sem decimais para outros KPIs
             }
             tr.appendChild(td);
         }
@@ -633,7 +633,14 @@ exportCsvBtn.addEventListener('click', () => {
         rowData.push(row.querySelector('th').innerText); 
         // Pega os valores das demais células <td>
         Array.from(row.querySelectorAll('td')).forEach(cell => {
-            rowData.push(cell.innerText.replace(/\./g, '').replace(',', '.')); // Remove ponto de milhar e troca vírgula por ponto para CSV numérico
+            // Remove ponto de milhar e troca vírgula por ponto para CSV numérico (apenas se for PHD, outros são inteiros)
+            let formattedValue = cell.innerText;
+            if (cell.innerText.includes(',')) { // Checa se tem vírgula (provavelmente um decimal)
+                formattedValue = formattedValue.replace(/\./g, '').replace(',', '.'); // Remove milhar e troca decimal
+            } else {
+                formattedValue = formattedValue.replace(/\./g, ''); // Remove apenas milhar para inteiros
+            }
+            rowData.push(formattedValue);
         });
         csv.push(rowData.join(';'));
     });
