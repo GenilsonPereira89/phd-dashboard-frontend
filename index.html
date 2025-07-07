@@ -11,13 +11,6 @@
         <img src="img/logop.png" alt="Logo da Shopee" class="shopee-logo">
         <h1>Dashboard de Produtividade PHD</h1>
 
-        <!-- Botões de Navegação -->
-        <div class="nav-buttons">
-            <button id="showDashboardBtn" class="active">Dashboard Mensal</button>
-            <button id="showReportBtn">Relatório Analítico</button>
-        </div>
-
-        <!-- Seção de Configurações Globais -->
         <div class="config-section">
             <h2>Configurações Globais</h2>
             <div class="input-group">
@@ -32,130 +25,94 @@
             </p>
         </div>
 
-        <!-- Seção Principal do Dashboard -->
-        <div id="dashboardSection" class="section-content active">
-            <div class="form-section">
-                <h2>Registrar Produção Diária</h2>
-                <div class="input-group">
-                    <label for="data">Data:</label>
-                    <input type="date" id="data" required>
-                </div>
-                <div class="input-group">
-                    <label for="producaoDiaria">Produção Diária (Pacotes):</label>
-                    <input type="number" id="producaoDiaria" min="0" required>
-                </div>
-                <div class="input-group">
-                    <label for="operadoresNoDia">Operadores no Dia:</label>
-                    <input type="number" id="operadoresNoDia" value="13" min="0" required>
-                </div>
-                <div class="input-group checkbox-group">
-                    <input type="checkbox" id="isExcecao">
-                    <label for="isExcecao">Dia de Exceção (Feriado, Folga, Manutenção, etc.)</label>
-                </div>
-                <button id="addProducaoBtn">Adicionar/Atualizar Produção</button>
+        <div class="form-section">
+            <h2>Registrar Produção Diária</h2>
+            <div class="input-group">
+                <label for="data">Data:</label>
+                <input type="date" id="data" required>
+            </div>
+            <div class="input-group">
+                <label for="producaoDiaria">Produção Diária (Pacotes):</label>
+                <input type="number" id="producaoDiaria" min="0" required>
+            </div>
+            <div class="input-group">
+                <label for="operadoresNoDia">Operadores no Dia:</label>
+                <input type="number" id="operadoresNoDia" value="13" min="0" required>
+            </div>
+            <div class="input-group checkbox-group">
+                <input type="checkbox" id="isExcecao">
+                <label for="isExcecao">Dia de Exceção (Feriado, Folga, Manutenção, etc.)</label>
+            </div>
+            <button id="addProducaoBtn">Adicionar/Atualizar Produção</button>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Dashboard do Mês <span id="mesAtual"></span></h2>
+            <div class="select-month-year">
+                <label for="selectMes">Mês:</label>
+                <select id="selectMes"></select>
+                <label for="selectAno">Ano:</label>
+                <select id="selectAno"></select>
+                <button id="viewMonthBtn">Visualizar Mês</button>
             </div>
 
-            <div class="dashboard-section">
-                <h2>Dashboard do Mês <span id="mesAtual"></span></h2>
-                <div class="select-month-year">
-                    <label for="selectMes">Mês:</label>
-                    <select id="selectMes"></select>
-                    <label for="selectAno">Ano:</label>
-                    <select id="selectAno"></select>
-                    <button id="visualizarMesBtn">Visualizar Mês</button>
+            <div class="kpis">
+                <div class="kpi-card">
+                    <h3>Meta Mensal Total</h3>
+                    <p><span id="metaMensalTotal">0</span> pacotes</p>
                 </div>
-                <div class="kpis">
-                    <div class="kpi-card">
-                        <h3>Meta Mensal Total</h3>
-                        <p><span id="metaMensalTotal">0</span> pacotes</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Produção Acumulada</h3>
-                        <p><span id="producaoAcumulada">0</span> pacotes</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Meta Esperada até Hoje</h3>
-                        <p><span id="metaAcumulada">0</span> pacotes</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Saldo Acumulado</h3>
-                        <p><span id="saldoAcumulado">0</span> pacotes</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Falta para Meta Mensal</h3>
-                        <p><span id="faltaParaMetaMensal">0</span> pacotes</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>PHD Médio Mensal</h3>
-                        <p><span id="phdMedioMensal">0.00</span> pacotes/operador</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Total Dias Operacionais Previstos</h3>
-                        <p><span id="totalDiasOperacionaisPrevistos">0</span> dias</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Dias de Operação Considerados</h3>
-                        <p><span id="diasOperacaoConsiderados">0</span> dias</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Dias Restantes no Mês</h3>
-                        <p><span id="diasRestantes">0</span> dias</p>
-                    </div>
+                <div class="kpi-card">
+                    <h3>Produção Acumulada</h3>
+                    <p><span id="producaoAcumulada">0</span> pacotes</p>
                 </div>
-                <div class="projection-text">
-                    <p id="projecaoTexto">Comece a lançar sua produção para ver a projeção!</p>
+                <div class="kpi-card">
+                    <h3>Meta Esperada até Hoje</h3> 
+                    <p><span id="metaAcumulada">0</span> pacotes</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Falta para a Meta Mensal</h3>
+                    <p><span id="faltaParaMetaMensal">0</span> pacotes</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Saldo Acumulado</h3>
+                    <p><span id="saldoAcumulado">0</span></p>
+                </div>
+                <div class="kpi-card">
+                    <h3>PHD Médio Mensal</h3>
+                    <p><span id="phdMedioMensal">0.00</span> pacotes/operador</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Dias de Operação Considerados</h3>
+                    <p><span id="diasOperacaoConsiderados">0</span> dias</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Dias Restantes no Mês</h3>
+                    <p><span id="diasRestantes">0</span> dias</p>
                 </div>
             </div>
-
-            <div class="historico-section">
-                <h2>Histórico de Produção</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Produção (Pacotes)</th>
-                            <th>Operadores</th>
-                            <th>Meta Diária</th>
-                            <th>PHD Diário</th>
-                            <th>Saldo Diário</th>
-                            <th>Tipo de Dia</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historicoTableBody">
-                    </tbody>
-                </table>
+            <div class="projection-text">
+                <p id="projecaoTexto">Comece a lançar sua produção para ver a projeção!</p>
             </div>
         </div>
 
-        <!-- Seção de Relatório Analítico -->
-        <div id="reportSection" class="section-content hidden">
-            <h2>Relatório Analítico Mensal</h2>
-            <div class="report-controls">
-                <div class="input-group">
-                    <label for="reportMeses">Selecionar Mês(es) para o Relatório (use Ctrl/Cmd para múltiplos):</label>
-                    <select id="reportMeses" multiple size="12"></select>
-                </div>
-                <div class="input-group">
-                    <label for="reportAno">Ano:</label>
-                    <select id="reportAno"></select>
-                </div>
-                <button id="generateReportBtn">Gerar Relatório</button>
-                <button id="exportCsvBtn">Exportar para CSV</button>
-            </div>
-            <div class="report-output">
-                <p id="reportStatus"></p>
-                <table id="reportTable">
-                    <thead>
-                        <tr id="reportTableHeader">
-                            <th>KPI</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportTableBody">
-                        <!-- Linhas serão preenchidas via JavaScript -->
+        <div class="historico-section">
+            <h2>Histórico de Produção</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Produção (Pacotes)</th>
+                        <th>Operadores</th>
+                        <th>Meta Diária</th>
+                        <th>PHD Diário</th>
+                        <th>Saldo Diário</th>
+                        <th>Tipo de Dia</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="historicoTableBody">
                     </tbody>
-                </table>
-            </div>
+            </table>
         </div>
     </div>
 

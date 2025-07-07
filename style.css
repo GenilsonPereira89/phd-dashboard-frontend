@@ -38,7 +38,7 @@ h1, h2 {
 
 /* Renomeei 'input-section' para 'form-section' no HTML, então ajusto aqui */
 /* E adicionei 'historico-section' e 'dashboard-section' para as bordas e fundo */
-.form-section, .dashboard-section, .historico-section, .config-section, .select-month-year, .report-controls, .report-output {
+.form-section, .dashboard-section, .historico-section, .config-section, .select-month-year {
     margin-bottom: 30px;
     padding: 20px;
     border: 1px solid #eee;
@@ -254,52 +254,83 @@ table tbody tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-table td .delete-btn {
-    background-color: #dc3545;
+table tbody tr:hover {
+    background-color: #e9e9e9;
+}
+
+/* Estilo para o botão de exclusão na tabela */
+.delete-btn {
+    background-color: #dc3545; /* Vermelho */
     color: white;
     border: none;
     padding: 5px 10px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.8em;
+    font-size: 0.9em;
     transition: background-color 0.3s ease;
 }
 
-table td .delete-btn:hover {
+.delete-btn:hover {
     background-color: #c82333;
 }
 
-/* Estilos responsivos */
+/* Estilo para o texto de "Dia de Exceção" na tabela */
+.excecao-dia {
+    color: #6c757d; /* Cinza para indicar exceção */
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+#projecaoTexto {
+    font-style: italic;
+    color: #555;
+    margin-top: 15px;
+    text-align: center; /* Centraliza o texto de projeção */
+}
+
+.config-info {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: -10px; /* Reduz espaço entre o botão e a info */
+    margin-bottom: 20px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* Media Queries para responsividade */
 @media (max-width: 768px) {
-    .kpis {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .kpi-card {
-        flex: 1 1 100%; /* Um card por linha em telas menores */
-        max-width: 90%;
-    }
-
-    .select-month-year, .report-controls {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .select-month-year label,
-    .select-month-year select,
-    .select-month-year button,
-    .report-controls label,
-    .report-controls select,
-    .report-controls button {
-        width: 100%;
-        text-align: center;
-    }
-
-    .select-month-year select, .report-controls select {
-        margin-bottom: 10px;
+    .container {
+        padding: 15px;
     }
     
+    /* Ajustes para telas menores nos cartões KPI */
+    .kpi-card {
+        flex: 1 1 calc(50% - 30px); /* 2 cards por linha em telas menores */
+    }
+
+    /* Deixa inputs e botões em 100% da largura em telas menores */
+    .form-section input[type="date"],
+    .form-section input[type="number"],
+    .form-section button,
+    .config-section input[type="number"],
+    .config-section button,
+    .select-month-year select,
+    .select-month-year button {
+        width: 100%;
+        max-width: none; /* Remove max-width para inputs numéricos */
+        box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
+    }
+
+    /* Empilha os elementos da seção de seleção de mês em telas menores */
+    .select-month-year label,
+    .select-month-year select,
+    .select-month-year button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+
     .input-group.checkbox-group {
         flex-direction: column;
         align-items: flex-start;
@@ -341,80 +372,10 @@ table td .delete-btn:hover {
     /* Mapeamento dos cabeçalhos para os dados */
     table td:nth-of-type(1):before { content: "Data"; }
     table td:nth-of-type(2):before { content: "Produção (Pacotes)"; }
-    table td:nth-of-type(3):before { content: "Operadores"; }
-    table td:nth-of-type(4):before { content: "Meta Diária"; }
+    table td:nth-of-type(3):before { content: "Operadores"; } /* Nova coluna */
+    table td:nth-of-type(4):before { content: "Meta Diária"; } /* Nova coluna */
     table td:nth-of-type(5):before { content: "PHD Diário"; }
     table td:nth-of-type(6):before { content: "Saldo Diário"; }
     table td:nth-of-type(7):before { content: "Tipo de Dia"; }
     table td:nth-of-type(8):before { content: "Ações"; }
-}
-
-/* Estilos para a nova seção de relatório */
-.section-content {
-    display: none; /* Esconde todas as seções por padrão */
-}
-
-.section-content.active {
-    display: block; /* Mostra a seção ativa */
-}
-
-.nav-buttons {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.nav-buttons button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 0 5px;
-    transition: background-color 0.3s ease;
-}
-
-.nav-buttons button:hover {
-    background-color: #0056b3;
-}
-
-.nav-buttons button.active {
-    background-color: #0056b3; /* Cor mais escura para o botão ativo */
-    font-weight: bold;
-}
-
-/* Estilos específicos para a tabela de relatório */
-#reportTable {
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse;
-}
-
-#reportTable th, #reportTable td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-    white-space: nowrap; /* Evita quebra de linha nos valores da tabela */
-}
-
-#reportTable th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-}
-
-#reportTable tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-#reportStatus {
-    text-align: center;
-    font-style: italic;
-    color: #666;
-}
-
-/* Estilo para o select múltiplo */
-#reportMeses {
-    height: 200px; /* Altura fixa para mostrar múltiplos meses */
-    width: 100%;
 }
