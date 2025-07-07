@@ -5,9 +5,9 @@ const DIAS_OPERACAO_SEMANA = 6; // Esta constante serve mais para informação a
 
 // URL base do seu backend - MUITO IMPORTANTE!
 // QUANDO FOR PARA O RENDER, ESTA URL MUDARÁ PARA O ENDEREÇO DO SEU BACKEND NO RENDER.
-const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api'; // <-- ALTERAÇÃO AQUI!
+const API_BASE_URL = 'https://phd-dashboard-backend-python.onrender.com/api';
 
-// Elementos HTML (seletores) - AGORA SERÃO DEFINIDOS DENTRO DO DOMContentLoaded
+// Elementos HTML (seletores) - Declarados globalmente, mas inicializados DENTRO do DOMContentLoaded
 let dataInput;
 let producaoDiariaInput;
 let isExcecaoCheckbox;
@@ -37,21 +37,19 @@ let updateConfigBtn;
 let anoVisualizado;
 let mesVisualizado;
 
-// --- Funções de API (mantidas iguais) ---
+// --- Funções de API ---
 async function getConfigsAPI() {
     try {
         const response = await fetch(`${API_BASE_URL}/configs`);
         if (!response.ok) {
-            // Se a resposta não for 2xx, verifica se é um 404 para criar as configurações padrão
             if (response.status === 404) {
                 console.warn('Configurações não encontradas, criando padrão...');
-                // Tenta criar as configurações padrão no backend
                 const createResponse = await fetch(`${API_BASE_URL}/configs`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ num_operadores_padrao: 13 }), // Valor padrão inicial
+                    body: JSON.stringify({ num_operadores_padrao: 13 }),
                 });
                 if (!createResponse.ok) {
                     throw new Error(`Erro ao criar configurações padrão: ${createResponse.statusText}`);
@@ -63,7 +61,6 @@ async function getConfigsAPI() {
         return await response.json();
     } catch (error) {
         console.error('Erro na comunicação com a API de configurações:', error);
-        // Retorna um valor padrão seguro em caso de falha completa
         return { num_operadores_padrao: 13 };
     }
 }
@@ -111,7 +108,6 @@ async function addProducaoAPI(producaoData) {
             body: JSON.stringify(producaoData),
         });
         if (!response.ok) {
-            // Tenta ler o erro do backend se disponível
             const errorData = await response.json().catch(() => ({ message: response.statusText }));
             throw new Error(`Erro ao adicionar produção: ${errorData.message || response.statusText}`);
         }
@@ -139,7 +135,7 @@ async function deleteProducaoAPI(id) {
     }
 }
 
-// --- Funções de Utilitários e Lógica (alteradas onde indicado) ---
+// --- Funções de Utilitários e Lógica ---
 function getNomeMes(numeroMes) {
     const data = new Date(2000, numeroMes - 1, 1);
     return data.toLocaleString('pt-BR', { month: 'long' });
@@ -177,10 +173,9 @@ async function calculaKPIs(historicoProducao) {
 
     const totalDiasNoMes = getDiasNoMes(mesVisualizado, anoVisualizado);
     const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Zera as horas para comparação
+    hoje.setHours(0, 0, 0, 0);
     const dataUltimoDiaMesVisualizado = new Date(anoVisualizado, mesVisualizado - 1, totalDiasNoMes);
 
-    // Filtrar o histórico para o mês/ano visualizado
     const historicoProducaoFiltrado = historicoProducao.filter(p => {
         const pDate = new Date(p.data);
         return pDate.getFullYear() === anoVisualizado && pDate.getMonth() + 1 === mesVisualizado;
@@ -189,8 +184,8 @@ async function calculaKPIs(historicoProducao) {
     kpis.producaoAcumulada = historicoProducaoFiltrado.reduce((sum, p) => sum + p.producaoDiaria, 0);
 
     let totalOperadoresEmDiasOperacionais = 0;
-    kpis.diasOperacaoConsiderados = 0; // Reinicia a contagem de dias considerados
-    let maxDiaHistorico = 0; // Para saber qual o último dia com lançamento
+    kpis.diasOperacaoConsiderados = 0;
+    let maxDiaHistorico = 0;
 
     historicoProducaoFiltrado.forEach(p => {
         const pDate = new Date(p.data);
@@ -200,44 +195,35 @@ async function calculaKPIs(historicoProducao) {
 
         if (p.tipoDia !== 'Exceção') {
             totalOperadoresEmDiasOperacionais += p.operadoresNoDia;
-            kpis.diasOperacaoConsiderados++; // Conta apenas dias não exceção com produção
+            kpis.diasOperacaoConsiderados++;
         }
     });
 
-    // Calcula PHD Médio Mensal apenas se houver produção e operadores
     if (kpis.producaoAcumulada > 0 && totalOperadoresEmDiasOperacionais > 0) {
         kpis.phdMedioMensal = kpis.producaoAcumulada / totalOperadoresEmDiasOperacionais;
     }
 
-    // Calcula Total Dias Operacionais Previstos (para o mês visualizado)
     kpis.totalDiasOperacionaisPrevistos = calculaDiasUteisNoMes(mesVisualizado, anoVisualizado);
 
-    // Calcula Meta Mensal Total
     kpis.metaMensalTotal = kpis.totalDiasOperacionaisPrevistos * NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META;
 
-    // --- ALTERAÇÃO AQUI: CÁLCULO DA META ESPERADA ATÉ HOJE ---
-    // Agora, a Meta Esperada até Hoje considera apenas os dias que tiveram produção lançada
-    // e que não foram marcados como exceção.
+    // Meta Esperada até Hoje: Considera apenas dias com produção lançada e não exceção.
     kpis.metaEsperadaAteHoje = kpis.diasOperacaoConsiderados * (NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META);
-    // --------------------------------------------------------
 
     kpis.saldoAcumulado = kpis.producaoAcumulada - kpis.metaEsperadaAteHoje;
     kpis.faltaParaMetaMensal = Math.max(0, kpis.metaMensalTotal - kpis.producaoAcumulada);
 
-    // Calcula Dias Restantes no Mês
     kpis.diasRestantes = 0;
-    if (new Date(anoVisualizado, mesVisualizado - 1, 1) <= hoje) { // Só calcula se o mês visualizado já começou ou é o atual
-        let diaAtualDoLoop = hoje.getDate() + 1; // Começa a contar do dia seguinte ao atual
+    if (new Date(anoVisualizado, mesVisualizado - 1, 1) <= hoje) {
+        let diaAtualDoLoop = hoje.getDate() + 1;
         if (anoVisualizado > hoje.getFullYear() || (anoVisualizado === hoje.getFullYear() && mesVisualizado > (hoje.getMonth() + 1))) {
-            // Se o mês visualizado é no futuro, conta todos os dias úteis do mês
-            diaAtualDoLoop = 1; // Começa do primeiro dia do mês para meses futuros
+            diaAtualDoLoop = 1;
         }
 
         for (let i = diaAtualDoLoop; i <= totalDiasNoMes; i++) {
             const dataIteracao = new Date(anoVisualizado, mesVisualizado - 1, i);
-            const diaDaSemana = dataIteracao.getDay(); // 0 = Domingo, 6 = Sábado
+            const diaDaSemana = dataIteracao.getDay();
 
-            // Verifica se o dia é uma exceção (feriado, folga, etc.) no histórico
             const excecaoParaEsteDia = historicoProducaoFiltrado.find(p => {
                 const pDate = new Date(p.data);
                 return pDate.getFullYear() === dataIteracao.getFullYear() &&
@@ -246,15 +232,13 @@ async function calculaKPIs(historicoProducao) {
                        p.tipoDia === 'Exceção';
             });
 
-            // Se não é domingo e não é exceção, é um dia operacional restante
             if (diaDaSemana !== 0 && !excecaoParaEsteDia) {
                 kpis.diasRestantes++;
             }
         }
-    } else { // Se o mês visualizado é no passado
+    } else {
         kpis.diasRestantes = 0;
     }
-
 
     return kpis;
 }
@@ -275,7 +259,6 @@ function exibeKPIs(kpis) {
     // Lógica de projeção aprimorada
     if (kpis.producaoAcumulada > 0 || kpis.diasOperacaoConsiderados > 0) {
         if (kpis.diasRestantes > 0) {
-            // A projeção usa o ritmo padrão para os dias futuros
             const projecaoTotal = kpis.producaoAcumulada + (kpis.diasRestantes * NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META);
             const diferenca = Math.abs(projecaoTotal - kpis.metaMensalTotal);
             
@@ -284,7 +267,6 @@ function exibeKPIs(kpis) {
             if (projecaoTotal >= kpis.metaMensalTotal) {
                 projecaoMensagem += `<strong>ACIMA ${diferenca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} pacotes</strong> da meta mensal.`;
                 
-                // Calculate the daily production needed to hit the exact meta
                 const pacotesParaAtingirMetaExata = Math.max(0, kpis.metaMensalTotal - kpis.producaoAcumulada);
                 if (kpis.diasRestantes > 0 && NUM_OPERADORES_PADRAO > 0) {
                     const metaDiariaMinimaAjustada = pacotesParaAtingirMetaExata / kpis.diasRestantes;
@@ -315,39 +297,34 @@ function exibeKPIs(kpis) {
 }
 
 function exibeHistorico(historicoProducao) {
-    historicoTableBody.innerHTML = ''; // Limpa o corpo da tabela
+    historicoTableBody.innerHTML = '';
     const historicoProducaoFiltrado = historicoProducao.filter(p => {
         const pDate = new Date(p.data);
         return pDate.getFullYear() === anoVisualizado && pDate.getMonth() + 1 === mesVisualizado;
     });
 
-    historicoProducaoFiltrado.sort((a, b) => new Date(a.data) - new Date(b.data)); // Ordena por data
+    historicoProducaoFiltrado.sort((a, b) => new Date(a.data) - new Date(b.data));
 
     historicoProducaoFiltrado.forEach(producao => {
         const row = historicoTableBody.insertRow();
         const data = new Date(producao.data);
         const dataFormatada = `${String(data.getDate()).padStart(2, '0')}/${String(data.getMonth() + 1).padStart(2, '0')}/${data.getFullYear()}`;
 
-        // Calcula Meta Diária, PHD Diário e Saldo Diário para cada linha do histórico
-        // A meta diária baseada no NUM_OPERADORES_PADRAO, mas a comparação pode ser com os operadores do dia
         const metaDiariaPadrao = NUM_OPERADORES_PADRAO * PACOTES_POR_OPERADOR_DIA_META;
-        // Se o dia não for exceção e tiver operadores, calcula PHD e Saldo com base nos operadores do dia
         let phdDiario = 0;
         let saldoDiario = 0;
         if (producao.tipoDia !== 'Exceção' && producao.operadoresNoDia > 0) {
             phdDiario = producao.producaoDiaria / producao.operadoresNoDia;
             saldoDiario = producao.producaoDiaria - (producao.operadoresNoDia * PACOTES_POR_OPERADOR_DIA_META);
         } else if (producao.tipoDia === 'Exceção') {
-             // Para dias de exceção, PHD e Saldo não são aplicáveis no mesmo contexto
-             phdDiario = 0; // Ou 'N/A' se quiser exibir texto
-             saldoDiario = 0; // Ou 'N/A' se quiser exibir texto
+             phdDiario = 0;
+             saldoDiario = 0;
         }
-
 
         row.insertCell(0).textContent = dataFormatada;
         row.insertCell(1).textContent = producao.producaoDiaria.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
         row.insertCell(2).textContent = producao.operadoresNoDia;
-        row.insertCell(3).textContent = metaDiariaPadrao.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Exibe a meta padrão
+        row.insertCell(3).textContent = metaDiariaPadrao.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
         row.insertCell(4).textContent = phdDiario.toFixed(2).toLocaleString('pt-BR');
         row.insertCell(5).textContent = saldoDiario.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
         row.insertCell(6).textContent = producao.tipoDia;
@@ -359,7 +336,7 @@ function exibeHistorico(historicoProducao) {
         deleteBtn.onclick = async () => {
             if (confirm(`Tem certeza que deseja excluir a produção de ${dataFormatada}?`)) {
                 await deleteProducaoAPI(producao.id);
-                carregarEExibirDados(); // Recarrega os dados após a exclusão
+                carregarEExibirDados();
             }
         };
         acoesCell.appendChild(deleteBtn);
@@ -373,10 +350,6 @@ async function carregarEExibirDados() {
     exibeHistorico(historico);
 }
 
-// --- Listeners de Eventos ---
-// Os listeners de eventos agora são adicionados DENTRO do DOMContentLoaded
-// para garantir que os elementos já existem.
-
 // --- Inicialização da página ---
 function popularSeletoresDeMesAno() {
     const meses = [
@@ -387,14 +360,14 @@ function popularSeletoresDeMesAno() {
 
     const anoAtual = new Date().getFullYear();
     const anos = [];
-    for (let i = anoAtual - 5; i <= anoAtual + 5; i++) { // Últimos 5 anos e próximos 5 anos
+    for (let i = anoAtual - 5; i <= anoAtual + 5; i++) {
         anos.push(i);
     }
     selectAno.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // SELEÇÃO DOS ELEMENTOS HTML MOVIDA PARA AQUI
+    // --- 1. SELEÇÃO DE TODOS OS ELEMENTOS HTML ---
     dataInput = document.getElementById('data');
     producaoDiariaInput = document.getElementById('producaoDiaria');
     isExcecaoCheckbox = document.getElementById('isExcecao');
@@ -420,14 +393,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     numOperadoresGlobalInput = document.getElementById('numOperadores');
     updateConfigBtn = document.getElementById('updateConfigBtn');
-    // FIM DA SELEÇÃO DOS ELEMENTOS HTML
 
-    // Carrega as configurações (incluindo NUM_OPERADORES_PADRAO) da API
+    // --- 2. CARREGA CONFIGURAÇÕES DA API ---
     const configs = await getConfigsAPI();
     NUM_OPERADORES_PADRAO = configs.num_operadores_padrao;
 
-    popularSeletoresDeMesAno(); // Popula os dropdowns de mês e ano
+    // --- 3. POPULA SELETORES DE MÊS E ANO (AGORA QUE selectMes e selectAno estão inicializados) ---
+    popularSeletoresDeMesAno();
 
+    // --- 4. CONFIGURA VALORES INICIAIS NOS INPUTS E VARIÁVEIS DE VISUALIZAÇÃO ---
     const hoje = new Date();
     const dia = String(hoje.getDate()).padStart(2, '0');
     const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -443,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectMes.value = mesVisualizado;
     selectAno.value = anoVisualizado;
 
-    // ADIÇÃO DOS LISTENERS DE EVENTOS MOVIDA PARA AQUI
+    // --- 5. ADIÇÃO DOS LISTENERS DE EVENTOS ---
     addProducaoBtn.addEventListener('click', async () => {
         const data = dataInput.value;
         const producaoDiaria = parseInt(producaoDiariaInput.value);
@@ -494,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             carregarEExibirDados();
         }
     });
-    // FIM DA ADIÇÃO DOS LISTENERS DE EVENTOS
 
-    await carregarEExibirDados(); // Carrega e exibe os dados iniciais
+    // --- 6. CARREGA E EXIBE DADOS INICIAIS ---
+    await carregarEExibirDados();
 });
