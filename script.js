@@ -289,7 +289,7 @@ addProducaoBtn.addEventListener('click', async () => { // Marcado como async
     if (addProducaoBtn.dataset.editing === 'true') {
         // Se estiver em modo de edição, chama a função de atualização
         response = await atualizarProducaoAPI(data, novoRegistro);
-        addProducaoBtn.textContent = 'Adicionar/Atualizar Produção'; // Volta o texto original
+        addProduacaoBtn.textContent = 'Adicionar/Atualizar Produção'; // Volta o texto original
         delete addProducaoBtn.dataset.editing; // Remove o atributo de edição
     } else {
         // Caso contrário, adiciona um novo registro
@@ -479,14 +479,14 @@ async function atualizarDashboard(ano, mes) { // Marcado como async
         // Botão Editar
         const editBtn = document.createElement('button');
         editBtn.textContent = 'Editar';
-        editBtn.classList.add('edit-btn'); // Adiciona uma classe para estilização
+        editBtn.classList.add('acao-btn', 'edit-btn'); // Adiciona as classes 'acao-btn' e 'edit-btn'
         editBtn.onclick = () => editarProducao(registro); // Chama a nova função de edição
         acoesCell.appendChild(editBtn);
 
         // Botão Excluir
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Excluir';
-        deleteBtn.classList.add('delete-btn');
+        deleteBtn.classList.add('acao-btn', 'delete-btn'); // Adiciona as classes 'acao-btn' e 'delete-btn'
         deleteBtn.onclick = () => excluirProducao(registro.data); // Chama a função que usa a API
         acoesCell.appendChild(deleteBtn);
     });
