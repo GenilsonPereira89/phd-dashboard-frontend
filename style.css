@@ -136,9 +136,11 @@ h1, h2 {
 }
 
 .config-section button {
-    background-color: #28a745; /* Cor verde para o botão de atualização */
+    background-color: #007bff; /* Cor azul para o botão de atualização */
     width: auto; /* Deixa o botão ter sua largura natural */
     padding: 10px 15px;
+    color: #fff;
+    border:none;
 }
 .config-section button:hover {
     background-color: #218838;
