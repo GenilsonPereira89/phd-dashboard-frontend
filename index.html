@@ -39,6 +39,10 @@
                 <label for="operadoresNoDia">Operadores no Dia:</label>
                 <input type="number" id="operadoresNoDia" value="13" min="0" required>
             </div>
+            <div class="input-group">
+                <label for="diaristasNoDia">Diaristas no Dia:</label>
+                <input type="number" id="diaristasNoDia" value="0" min="0" required>
+            </div>
             <div class="input-group checkbox-group">
                 <input type="checkbox" id="isExcecao">
                 <label for="isExcecao">Dia de Exceção (Feriado, Folga, Manutenção, etc.)</label>
@@ -89,6 +93,10 @@
                     <h3>Dias Restantes no Mês</h3>
                     <p><span id="diasRestantes">0</span> dias</p>
                 </div>
+                <div class="kpi-card">
+                    <h3>Total de Diaristas no Mês</h3>
+                    <p><span id="totalDiaristasMes">0</span> diaristas</p>
+                </div>
             </div>
             <div class="projection-text">
                 <p id="projecaoTexto">Comece a lançar sua produção para ver a projeção!</p>
@@ -103,7 +111,7 @@
                         <th>Data</th>
                         <th>Produção (Pacotes)</th>
                         <th>Operadores</th>
-                        <th>Meta Diária</th>
+                        <th>Diaristas</th> <th>Meta Diária</th>
                         <th>PHD Diário</th>
                         <th>Saldo Diário</th>
                         <th>Tipo de Dia</th>
