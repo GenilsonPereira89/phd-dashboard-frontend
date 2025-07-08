@@ -279,7 +279,7 @@ h1, h2 {
 
 /* Estilo específico para o texto de projeção semanal */
 .projection-text-weekly {
-    margin-top: 10px; /* Espaço entre a projeção mensal e semanal */
+    margin-top: 15px; /* Aumenta a margem superior para criar mais espaço */
     font-size: 0.95em;
     color: #5a6268; /* Uma cor um pouco mais suave */
 }
