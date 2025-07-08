@@ -1,0 +1,365 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px;
+}
+
+/* Estilo para o contêiner da logo - centraliza horizontalmente */
+.logo-container {
+    text-align: center; /* Centraliza o conteúdo (a imagem) horizontalmente */
+    margin-bottom: 20px; /* Espaçamento abaixo da logo */
+}
+
+.shopee-logo {
+    max-width: 120px; /* Reduz o tamanho máximo da logo para 120px */
+    height: auto; /* Mantém a proporção da imagem */
+    display: block; /* Garante que a imagem se comporte como um bloco para centralização */
+    margin: 0 auto; /* Centraliza a imagem dentro do seu contêiner */
+}
+
+h1, h2 {
+    color: #0056b3;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Estilo para as seções principais (card-like) */
+.config-section, .form-section, .dashboard-section, .historico-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #fdfdfd;
+}
+
+/* Estilo para os grupos de input - Labels acima dos inputs */
+.input-group {
+    margin-bottom: 15px; /* Espaço entre os grupos de input */
+}
+
+.input-group label {
+    display: block; /* Faz a label ocupar a linha inteira */
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.input-group input[type="number"],
+.input-group input[type="date"],
+.input-group select {
+    width: calc(100% - 22px); /* Ajusta a largura para considerar o padding e a borda */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura total */
+}
+
+/* Ajuste para o grupo de checkbox */
+.input-group.checkbox-group {
+    display: flex; /* Mantém flex para alinhar checkbox e label na mesma linha */
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px; /* Espaçamento entre checkbox e label */
+}
+
+.input-group.checkbox-group input[type="checkbox"] {
+    margin-right: 0; /* Remove margem extra */
+    transform: scale(1.2); /* Aumenta um pouco o checkbox */
+    width: auto; /* Garante que o checkbox não ocupe 100% da largura */
+}
+
+.input-group.checkbox-group label {
+    margin-bottom: 0; /* Remove margem inferior para alinhamento */
+    font-weight: normal;
+    display: inline-block; /* Para que a label não ocupe a linha inteira */
+}
+
+
+/* Estilo para botões */
+.form-section button,
+.config-section button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%; /* Botões ocupam 100% da largura */
+    transition: background-color 0.3s ease;
+}
+
+.form-section button:hover,
+.config-section button:hover {
+    background-color: #0056b3;
+}
+
+.config-section button { /* Cor específica para o botão de configuração */
+    background-color: #28a745;
+}
+.config-section button:hover {
+    background-color: #218838;
+}
+
+
+.config-info {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 10px; /* Ajusta o espaço */
+    margin-bottom: 20px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* Estilo para a seção de seleção de mês/ano */
+.select-month-year {
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px; /* Adicionado padding para visual */
+    border: 1px solid #eee; /* Adicionado borda para visual */
+    border-radius: 8px;
+    background-color: #fdfdfd;
+}
+
+.select-month-year label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 0; /* Alinhamento */
+}
+
+.select-month-year select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+.select-month-year button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    width: auto; /* Botão não ocupa 100% aqui */
+}
+
+.select-month-year button:hover {
+    background-color: #5a6268;
+}
+
+/* Cards de KPI no dashboard - Mantido o layout de grid flexível */
+.kpis {
+    display: flex; /* Usando flexbox como no original */
+    flex-wrap: wrap;
+    justify-content: space-around; /* Distribui os itens uniformemente */
+    gap: 15px; /* Espaço entre os cartões */
+    margin-top: 20px;
+}
+
+.kpi-card {
+    background-color: #e9f5ff;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    /* Ajuste para 3 colunas em telas maiores, e 2 em telas médias */
+    flex: 1 1 calc(33.333% - 15px); /* 33.333% para 3 colunas, menos o gap */
+    min-width: 180px; /* Garante um tamanho mínimo */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra original */
+}
+
+.kpi-card h3 {
+    color: #0056b3;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.kpi-card p {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+}
+
+.projection-text {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    color: #856404;
+}
+
+.projection-text p {
+    margin: 0;
+}
+
+.saldo-positivo {
+    color: green;
+}
+
+.saldo-negativo {
+    color: red;
+}
+
+/* Estilos da tabela de histórico */
+.historico-section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.historico-section th,
+.historico-section td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center; /* Centraliza o texto nas células da tabela */
+}
+
+.historico-section th {
+    background-color: #007bff; /* Cor de fundo original do cabeçalho */
+    color: white; /* Cor do texto original */
+    font-weight: bold;
+    white-space: nowrap; /* Evita quebra de linha nos cabeçalhos */
+}
+
+.historico-section tr:nth-child(even) {
+    background-color: #f2f2f2; /* Cor de fundo original para linhas pares */
+}
+
+.historico-section tr:hover {
+    background-color: #e9e9e9;
+}
+
+/* Estilo para o botão de exclusão na tabela */
+.delete-btn {
+    background-color: #dc3545; /* Vermelho */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+/* Estilo para o texto de "Dia de Exceção" na tabela */
+.excecao-dia {
+    color: #6c757d; /* Cinza para indicar exceção */
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+/* Media Queries para responsividade */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    /* Ajustes para telas menores nos cartões KPI */
+    .kpi-card {
+        flex: 1 1 calc(50% - 15px); /* 2 cards por linha em telas menores */
+    }
+
+    /* Inputs e botões ocupam 100% da largura em telas menores */
+    .form-section input[type="date"],
+    .form-section input[type="number"],
+    .form-section button,
+    .config-section input[type="number"],
+    .config-section button,
+    .select-month-year select,
+    .select-month-year button {
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+    }
+
+    /* Empilha os elementos da seção de seleção de mês em telas menores */
+    .select-month-year {
+        flex-direction: column;
+        align-items: stretch; /* Estica os itens para ocupar a largura total */
+    }
+    .select-month-year label,
+    .select-month-year select,
+    .select-month-year button {
+        width: 100%;
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+
+    .input-group.checkbox-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .input-group.checkbox-group input[type="checkbox"] {
+        margin-bottom: 5px;
+    }
+    
+    /* Ajuste para a tabela em telas muito pequenas */
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+    }
+    table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+    }
+    table td:before {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: bold;
+    }
+    /* Mapeamento dos cabeçalhos para os dados - ATUALIZADO COM DIARISTAS */
+    table td:nth-of-type(1):before { content: "Data"; }
+    table td:nth-of-type(2):before { content: "Produção (Pacotes)"; }
+    table td:nth-of-type(3):before { content: "Operadores"; }
+    table td:nth-of-type(4):before { content: "Diaristas"; } /* Adicionado para a nova coluna */
+    table td:nth-of-type(5):before { content: "Meta Diária"; }
+    table td:nth-of-type(6):before { content: "PHD Diário"; }
+    table td:nth-of-type(7):before { content: "Saldo Diário"; }
+    table td:nth-of-type(8):before { content: "Tipo de Dia"; }
+    table td:nth-of-type(9):before { content: "Ações"; } /* O índice mudou devido à nova coluna */
+}
