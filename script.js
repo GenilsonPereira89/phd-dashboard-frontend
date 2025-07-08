@@ -356,8 +356,9 @@ async function atualizarDashboard(ano, mes) {
     const nomeMes = getNomeMes(mesVisualizado);
     mesAtualElement.textContent = `${nomeMes} de ${anoVisualizado}`;
 
+    // RENOMEADO 'hoje' para 'dataAtualCalculo' para evitar conflito
     const dataAtualCalculo = new Date();
-    dataAtualCalculo.setHours(0, 0, 0, 0);
+    dataAtualCalculo.setHours(0, 0, 0, 0); // Zera hora para comparação de datas
 
     const producoesDoMesVisualizado = producoesMes; 
 
@@ -449,18 +450,20 @@ async function atualizarDashboard(ano, mes) {
     faltaParaMetaMensalElement.textContent = faltaParaMetaMensal.toLocaleString('pt-BR');
 
     let diasRestantesMensal = 0;
+    // Se o mês visualizado é o mês atual, calcula dias restantes a partir de hoje
     if (anoVisualizado === dataAtualCalculo.getFullYear() && mesVisualizado === (dataAtualCalculo.getMonth() + 1)) {
         for (let i = dataAtualCalculo.getDate() + 1; i <= ultimoDiaDoMes; i++) {
             const dataIteracao = new Date(anoVisualizado, mesVisualizado - 1, i);
-            if (dataIteracao.getDay() !== 0) {
+            if (dataIteracao.getDay() !== 0) { // Se não for domingo
                 diasRestantesMensal++;
             }
         }
     } else {
+        // Se o mês visualizado não é o mês atual, calcula todos os dias úteis não lançados
         diasRestantesMensal = getDiasDeOperacaoNoPeriodo(new Date(anoVisualizado, mesVisualizado - 1, 1), new Date(anoVisualizado, mesVisualizado, 0), producoesDoMesVisualizado) - diasDeOperacaoConsideradosMensal;
     }
     if (diasRestantesMensal < 0) {
-        diasRestantesMensal = 0;
+        diasRestantesMensal = 0; // Garante que não seja negativo
     }
 
 
@@ -492,7 +495,6 @@ async function atualizarDashboard(ano, mes) {
         let projecaoTextoMensal = '';
 
         if (producaoAcumuladaMensal === 0 && diasDeOperacaoConsideradosMensal === 0) {
-            // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO MENSAL (Cenário: Sem lançamentos)
             projecaoTextoMensal = `Ainda não há lançamentos de produção para ${nomeMes} de ${anoVisualizado}. A meta para o mês é de ${metaMensalTotal.toLocaleString('pt-BR')} pacotes. Comece a registrar a produção!`;
             projecaoTextoElement.style.color = 'blue';
         } else {
@@ -507,11 +509,10 @@ async function atualizarDashboard(ano, mes) {
                 const totalPessoasPadraoProjecao = NUM_OPERADORES_PADRAO + 0;
                 const phdAdicionalPorPessoa = (pacotesPorDiaParaRecuperar / totalPessoasPadraoProjecao).toFixed(2);
 
-                // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO MENSAL (Cenário: Abaixo da meta)
+
                 projecaoTextoMensal = `Para atingir a meta mensal, vocês precisam fazer uma média de ${Math.round(metaDiariaAjustadaParaRecuperar).toLocaleString('pt-BR')} pacotes por dia (ou seja, aproximadamente ${phdAdicionalPorPessoa} pacotes a mais por pessoa por dia, considerando ${NUM_OPERADORES_PADRAO} operadores e 0 diaristas) nos próximos ${diasRestantesMensal} dias de operação.`;
                 projecaoTextoElement.style.color = 'red';
             } else {
-                // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO MENSAL (Cenário: Acima ou na meta)
                 projecaoTextoMensal = `Com a produção atual, e mantendo o ritmo de ${metaDiariaPadraoParaProjecao.toLocaleString('pt-BR')} pacotes/dia (com ${NUM_OPERADORES_PADRAO} operadores e 0 diaristas), a projeção é de superar a meta mensal em ${projecaoSuperar.toLocaleString('pt-BR')} pacotes! Continuem assim!`;
                 projecaoTextoElement.style.color = 'green';
 
@@ -534,7 +535,6 @@ async function atualizarDashboard(ano, mes) {
             projecaoTextoElement.textContent = projecaoTextoMensal;
         }
     } else {
-        // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO MENSAL (Cenário: Mês encerrado)
         if (saldoTotalAcumuladoMensal < 0) {
             projecaoTextoElement.textContent = 'Mês encerrado com saldo negativo. Analisar desempenho para o próximo mês.';
             projecaoTextoElement.style.color = 'orange';
@@ -545,9 +545,10 @@ async function atualizarDashboard(ano, mes) {
     }
 
     // --- CÁLCULOS E PROJEÇÕES SEMANAIS ---
-    const diaDaSemanaHoje = dataAtualCalculo.getDay();
+    // Usamos 'dataAtualCalculo' aqui
+    const diaDaSemanaHoje = dataAtualCalculo.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
     const inicioSemana = new Date(dataAtualCalculo);
-    inicioSemana.setDate(dataAtualCalculo.getDate() - (diaDaSemanaHoje === 0 ? 6 : diaDaSemanaHoje - 1));
+    inicioSemana.setDate(dataAtualCalculo.getDate() - (diaDaSemanaHoje === 0 ? 6 : diaDaSemanaHoje - 1)); // Se for domingo, volta 6 dias. Senão, volta (dia-1) dias.
     inicioSemana.setHours(0, 0, 0, 0);
 
     const finalSemana = new Date(inicioSemana);
@@ -576,7 +577,7 @@ async function atualizarDashboard(ano, mes) {
         if (registroParaEsteDiaSemana) {
             if (!registroParaEsteDiaSemana.isExcecao) {
                 metaSemanalTotal += getMetaDiariaParaDia(registroParaEsteDiaSemana.operadoresNoDia, registroParaEsteDiaSemana.diaristasNoDia);
-                if (tempDateForWeeklyMeta <= dataAtualCalculo) {
+                if (tempDateForWeeklyMeta <= dataAtualCalculo) { // Compara com dataAtualCalculo
                     producaoAcumuladaSemanal += registroParaEsteDiaSemana.producao;
                     metaAcumuladaSemanal += getMetaDiariaParaDia(registroParaEsteDiaSemana.operadoresNoDia, registroParaEsteDiaSemana.diaristasNoDia);
                     diasOperacaoConsideradosSemanal++;
@@ -594,8 +595,8 @@ async function atualizarDashboard(ano, mes) {
     const saldoSemanal = producaoAcumuladaSemanal - metaAcumuladaSemanal;
     
     let diasOperacaoRestantesSemana = 0;
-    const tempDateForRemainingDays = new Date(dataAtualCalculo.getTime());
-    tempDateForRemainingDays.setDate(dataAtualCalculo.getDate() + 1);
+    const tempDateForRemainingDays = new Date(dataAtualCalculo.getTime()); // Começa a partir de dataAtualCalculo
+    tempDateForRemainingDays.setDate(dataAtualCalculo.getDate() + 1); // Próximo dia
     while (tempDateForRemainingDays <= finalSemana) {
         const dataStringTemp = `${tempDateForRemainingDays.getFullYear()}-${String(tempDateForRemainingDays.getMonth() + 1).padStart(2, '0')}-${String(tempDateForRemainingDays.getDate()).padStart(2, '0')}`;
         const registroParaEsteDiaSemanaFuturo = producoesDaSemana.find(p => p.data === dataStringTemp);
@@ -634,16 +635,13 @@ async function atualizarDashboard(ano, mes) {
             const pacotesPorDiaNecessarios = producaoNecessariaParaMetaSemanal / diasOperacaoRestantesSemana;
             const pessoasNecessarias = Math.ceil(pacotesPorDiaNecessarios / PACOTES_POR_OPERADOR_DIA_META);
 
-            // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO SEMANAL (Cenário: Abaixo da meta)
             projecaoSemanalTexto = `Para atingir a meta semanal, vocês precisam fazer uma média de ${Math.round(pacotesPorDiaNecessarios).toLocaleString('pt-BR')} pacotes por dia nos próximos ${diasOperacaoRestantesSemana} dias de operação. Isso exigiria aproximadamente **${pessoasNecessarias} operadores/diaristas** por dia, considerando o PHD de meta.`;
             projecaoSemanalTextoElement.style.color = 'red';
         } else {
-            // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO SEMANAL (Cenário: Acima ou na meta)
             projecaoSemanalTexto = `A meta semanal foi atingida ou superada! Continuem assim!`;
             projecaoSemanalTextoElement.style.color = 'green';
         }
     } else {
-        // <--- AQUI VOCÊ PODE MUDAR O TEXTO DA PROJEÇÃO SEMANAL (Cenário: Semana encerrada)
         if (saldoSemanal < 0) {
             projecaoSemanalTexto = 'Semana encerrada com saldo negativo. Analisar desempenho.';
             projecaoSemanalTextoElement.style.color = 'orange';
