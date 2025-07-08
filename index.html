@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Produtividade PHD</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+    <div class="container">
+        <!-- Logo e Título centralizados -->
+        <div class="logo-container">
+            <img src="img/logop.png" alt="Logo da Shopee" class="shopee-logo">
+            <h1>Dashboard de Produtividade PHD</h1>
+        </div>
+
+        <div class="config-section">
+            <h2>Configurações Globais</h2>
+            <div class="input-group">
+                <label for="numOperadores">Número de Operadores Padrão:</label>
+                <input type="number" id="numOperadores" value="13" min="1" required>
+                <button id="updateConfigBtn">Atualizar Padrão</button>
+            </div>
+            <p class="config-info">
+                * Este valor define a base para cálculo da meta diária de dias futuros e é o valor padrão para novos lançamentos.
+                <br>
+                * Para ajustar operadores em um dia específico, use o campo "Operadores no Dia" no formulário de lançamento.
+            </p>
+        </div>
+
+        <div class="form-section">
+            <h2>Registrar Produção Diária</h2>
+            <div class="input-group">
+                <label for="data">Data:</label>
+                <input type="date" id="data" required>
+            </div>
+            <div class="input-group">
+                <label for="producaoDiaria">Produção Diária (Pacotes):</label>
+                <input type="number" id="producaoDiaria" min="0" required>
+            </div>
+            <div class="input-group">
+                <label for="operadoresNoDia">Operadores no Dia:</label>
+                <input type="number" id="operadoresNoDia" value="13" min="0" required>
+            </div>
+            <!-- NOVO CAMPO: Diaristas no Dia -->
+            <div class="input-group">
+                <label for="diaristasNoDia">Diaristas no Dia:</label>
+                <input type="number" id="diaristasNoDia" value="0" min="0" required>
+            </div>
+            <div class="input-group checkbox-group">
+                <input type="checkbox" id="isExcecao">
+                <label for="isExcecao">Dia de Exceção (Feriado, Folga, Manutenção, etc.)</label>
+            </div>
+            <button id="addProducaoBtn">Adicionar/Atualizar Produção</button>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Dashboard do Mês <span id="mesAtual"></span></h2>
+            <div class="select-month-year">
+                <label for="selectMes">Mês:</label>
+                <select id="selectMes"></select>
+                <label for="selectAno">Ano:</label>
+                <select id="selectAno"></select>
+                <button id="viewMonthBtn">Visualizar Mês</button>
+            </div>
+
+            <div class="kpis">
+                <div class="kpi-card">
+                    <h3>Meta Mensal Total</h3>
+                    <p><span id="metaMensalTotal">0</span> pacotes</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Produção Acumulada</h3>
+                    <p><span id="producaoAcumulada">0</span> pacotes</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Meta Esperada até Hoje</h3> 
+                    <p><span id="metaAcumulada">0</span> pacotes</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Falta para a Meta Mensal</h3>
+                    <p><span id="faltaParaMetaMensal">0</span> pacotes</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Saldo Acumulado</h3>
+                    <p><span id="saldoAcumulado">0</span></p>
+                </div>
+                <div class="kpi-card">
+                    <h3>PHD Médio Mensal</h3>
+                    <p><span id="phdMedioMensal">0.00</span> pacotes/operador</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Dias de Operação Considerados</h3>
+                    <p><span id="diasOperacaoConsiderados">0</span> dias</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Dias Restantes no Mês</h3>
+                    <p><span id="diasRestantes">0</span> dias</p>
+                </div>
+                <!-- NOVO KPI: Total de Diaristas no Mês -->
+                <div class="kpi-card">
+                    <h3>Total de Diaristas no Mês</h3>
+                    <p><span id="totalDiaristasMes">0</span> diaristas</p>
+                </div>
+            </div>
+            <div class="projection-text">
+                <p id="projecaoTexto">Comece a lançar sua produção para ver a projeção!</p>
+            </div>
+        </div>
+
+        <div class="historico-section">
+            <h2>Histórico de Produção</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Produção (Pacotes)</th>
+                        <th>Operadores</th>
+                        <th>Diaristas</th> <!-- NOVA COLUNA -->
+                        <th>Meta Diária</th>
+                        <th>PHD Diário</th>
+                        <th>Saldo Diário</th>
+                        <th>Tipo de Dia</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="historicoTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
