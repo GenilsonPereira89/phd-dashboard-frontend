@@ -314,14 +314,14 @@ h1, h2 {
     width: 100%; /* Permite que a tabela se ajuste à largura do container */
     border-collapse: collapse;
     margin-top: 20px;
-    min-width: 600px; /* MODIFICAÇÃO: Reduzido de 700px para 600px */
+    min-width: 700px; /* Mantém um tamanho mínimo para desktop, ativando scroll em mobile */
 }
 
 .historico-section th,
 .historico-section td {
     border: 1px solid #ddd;
-    padding: 5px; /* MODIFICAÇÃO: Reduzido de 6px para 5px */
-    font-size: 0.85em; /* MODIFICAÇÃO: Reduzido de 0.9em para 0.85em */
+    padding: 6px; /* Padding um pouco menor para as células da tabela */
+    font-size: 0.9em; /* Fonte menor para as células */
     text-align: center;
     white-space: nowrap; /* Tenta manter o texto na mesma linha */
 }
