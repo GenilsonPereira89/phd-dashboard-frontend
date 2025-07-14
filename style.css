@@ -321,7 +321,7 @@ h1, h2 {
 .historico-section td {
     border: 1px solid #ddd;
     padding: 6px; /* Padding um pouco menor para as células da tabela */
-    font-size: 15px; /* Fonte menor para as células */
+    font-size: 0.8em; /* Fonte menor para as células */
     text-align: center;
     white-space: nowrap; /* Tenta manter o texto na mesma linha */
 }
